@@ -1,8 +1,8 @@
 package com.ivan_degtev.whatsappbotforneoderma.controller;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.SendingMessageResponse;
-import com.ivan_degtev.whatsappbotforneoderma.service.ChatpushService;
-import com.ivan_degtev.whatsappbotforneoderma.service.MessageService;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.ChatpushServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +15,7 @@ import java.util.Map;
 @RestController
 @Slf4j
 public class WhatsAppController {
-    private final ChatpushService chatpushService;
+    private final ChatpushServiceImpl chatpushService;
     private final MessageService messageService;
 
     @Value("${ngrok.url}")
@@ -24,7 +24,7 @@ public class WhatsAppController {
     private String chatpushApiKey;
 
     public WhatsAppController(
-            ChatpushService chatpushService,
+            ChatpushServiceImpl chatpushService,
             MessageService messageService
     ) {
         this.chatpushService = chatpushService;

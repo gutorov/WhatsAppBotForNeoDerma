@@ -1,4 +1,4 @@
-package com.ivan_degtev.whatsappbotforneoderma.service;
+package com.ivan_degtev.whatsappbotforneoderma.service.impl;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,14 +17,14 @@ import java.util.Objects;
 
 @Service
 @Slf4j
-public class ChatpushService {
+public class ChatpushServiceImpl {
 
     @Value("${chatpush.api.key}")
     private String chatpushApiKey;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final UserService userService;
-    public ChatpushService(
+    public ChatpushServiceImpl(
             @Value("${chatpush.api.key}") String chatpushApiKey,
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,

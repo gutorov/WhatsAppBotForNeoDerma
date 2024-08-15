@@ -1,7 +1,6 @@
-package com.ivan_degtev.whatsappbotforneoderma.service;
+package com.ivan_degtev.whatsappbotforneoderma.service.impl;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.WebhookPayload;
-import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.UserMapper;
 import com.ivan_degtev.whatsappbotforneoderma.model.Message;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
