@@ -56,9 +56,11 @@ public class YClientServiceImpl implements YClientService {
 
     /**
      * Здесь получаем все виды услуг.
-     * Если добавить фильтр по сотруднику - получим продолжительность услуги(ВАЖНО),
-     * если указать дату - будет фильтр доступных услуг.
-     * В LLM нужно будет использовать этот метод для поиска
+     * Для ЛЛМ важно добавлять в фильтр айди сотрудника и дату, чтоб получить АКТУАЛЬНЫЕ УСЛУГИ в этой конфигурации
+     * Добавлять айди услуги бессмысленно - это какой-тто невнятный фильтр
+     * ВАЖНО!
+     * Для получения полной инфы об услугах - делать запрос только с указанием staff_id
+     * если указать еще и дату - получишь урезанную версию, где будут комплексы услуг, только с id категории без id услуги!
      */
     @Override
     public Mono<String> getListServicesAvailableForBooking(
@@ -69,25 +71,17 @@ public class YClientServiceImpl implements YClientService {
     ) {
         return webClient.get()
                 .uri(uriBuilder -> {
-                    StringBuilder pathBuilder = new StringBuilder("/book_services/{company_id}");
+                    String path = "/book_services/{company_id}";
 
-                    if (staffId != null) {
-                        pathBuilder.append("/{staff_id}");
-                    }
-                    if (datetime != null) {
-                        pathBuilder.append("/{datetime}");
-                    }
-                    if (serviceIds != null) {
-                        uriBuilder.queryParam("service_ids[]", serviceIds.toArray());
+                    uriBuilder.path(path).queryParam("staff_id", staffId)
+                            .queryParam("datetime", datetime != null ? datetime.toString() : null);
+                    if (serviceIds != null && !serviceIds.isEmpty()) {
+                        for (Long serviceId : serviceIds) {
+                            uriBuilder.queryParam("serviceIds", serviceId);
+                        }
                     }
 
-                    return uriBuilder
-                            .path(pathBuilder.toString())
-                            .build(
-                                    companyId,
-                                    staffId != null ? staffId : "",
-                                    datetime != null ? datetime.toLocalDate() : ""
-                            );
+                    return uriBuilder.build(companyId);
                 })
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
