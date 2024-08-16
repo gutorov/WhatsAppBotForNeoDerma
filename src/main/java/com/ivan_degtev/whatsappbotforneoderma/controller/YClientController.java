@@ -5,11 +5,16 @@ import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -49,9 +54,21 @@ public class YClientController {
     }
 
 
+    /**
+     *
+     * @param staffId
+     * @param datetime
+     * @param serviceIds
+     * @return JSON с уже занятыми часами у данного сотрудника
+     */
     @GetMapping(path = "/book_services")
-    public Mono<String> getListServicesAvailableForBooking() {
-        return yclientService.getListServicesAvailableForBooking(companyId);
+    public Mono<String> getListServicesAvailableForBooking(
+            @RequestParam(name = "staffId", required = false) Long staffId,
+            @RequestParam(name = "datetime", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datetime,
+            @RequestParam(name = "serviceIds", required = false) List<Long> serviceIds
+    ) {
+        return yclientService.getListServicesAvailableForBooking(companyId, staffId, datetime, serviceIds);
     }
 
 

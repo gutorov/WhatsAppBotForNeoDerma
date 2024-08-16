@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Service
 @Slf4j
 @Getter
@@ -53,16 +56,39 @@ public class YClientServiceImpl implements YClientService {
 
     /**
      * Здесь получаем все виды услуг.
-     * Если добавить(пока нет) фильтр по сотруднику - получим продолжительность услуги(ВАЖНО),
+     * Если добавить фильтр по сотруднику - получим продолжительность услуги(ВАЖНО),
      * если указать дату - будет фильтр доступных услуг.
      * В LLM нужно будет использовать этот метод для поиска
      */
     @Override
-    public Mono<String> getListServicesAvailableForBooking(Long companyId) {
+    public Mono<String> getListServicesAvailableForBooking(
+            Long companyId,
+            Long staffId,
+            LocalDateTime datetime,
+            List<Long> serviceIds
+    ) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/book_services/{company_id}")
-                        .build(companyId))
+                .uri(uriBuilder -> {
+                    StringBuilder pathBuilder = new StringBuilder("/book_services/{company_id}");
+
+                    if (staffId != null) {
+                        pathBuilder.append("/{staff_id}");
+                    }
+                    if (datetime != null) {
+                        pathBuilder.append("/{datetime}");
+                    }
+                    if (serviceIds != null) {
+                        uriBuilder.queryParam("service_ids[]", serviceIds.toArray());
+                    }
+
+                    return uriBuilder
+                            .path(pathBuilder.toString())
+                            .build(
+                                    companyId,
+                                    staffId != null ? staffId : "",
+                                    datetime != null ? datetime.toLocalDate() : ""
+                            );
+                })
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()

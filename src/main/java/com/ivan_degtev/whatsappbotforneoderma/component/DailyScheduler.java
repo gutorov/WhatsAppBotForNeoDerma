@@ -33,9 +33,14 @@ public class DailyScheduler {
         this.serviceMapper = serviceMapper;
     }
 
-    private static List<EmployeeDTO> employeeDTOList;
-    private static List<ServiceDTO> servicesDTOList;
+    private  List<EmployeeDTO> employeeDTOList;
+    private  List<ServiceDTO> servicesDTOList;
 
+    /**
+     * Шедлер работает 1 раз в сутки для обновления первичных данных от ЯКлиента - имен сотрудников, названий процедур
+     * и всех этих id, для создания более точечных запросов
+     * Временно хранит в локал переменной класса
+     */
     @Scheduled(cron = "0 0 0 * * *")
     public void scheduleDailyTasks() {
         log.info("DailyScheduler started");
@@ -46,7 +51,7 @@ public class DailyScheduler {
             log.info("Staff Data: " + employeeDTOList);
         }, error -> log.error("Failed to fetch staff data: " + error.getMessage()));
 
-        Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking();
+        Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking(null, null, null);
         servicesMono.subscribe(response -> {
             servicesDTOList = serviceMapper.mapJsonToServiceList(response);
             log.info("Services Data: " + servicesDTOList);

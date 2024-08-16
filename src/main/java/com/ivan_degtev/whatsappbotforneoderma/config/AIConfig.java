@@ -1,17 +1,29 @@
 package com.ivan_degtev.whatsappbotforneoderma.config;
 
+import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AIConfig {
 
+    @Value("${open.ai.token}")
+    private String openAiToken;
+
+    @Bean
+    public AIAnalyzer aiServices() {
+        return AiServices.builder(AIAnalyzer.class)
+                .chatLanguageModel(chatLanguageModel())
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .build();
+    }
     /**
      * Настрйока ассистента - интерфейса, через AiServices билдер клиента
      * для работы с яз. моделями через фреймворк langchain4j
@@ -20,7 +32,7 @@ public class AIConfig {
     public Assistant assistant() {
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatLanguageModel())
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(10))
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
                 .build();
     }
 
@@ -32,10 +44,10 @@ public class AIConfig {
     @Bean
     public ChatLanguageModel chatLanguageModel() {
         return OpenAiChatModel.builder()
-//                .apiKey("${open.ai.token}")
-                .apiKey("demo")
+                .apiKey(openAiToken)
+//                .apiKey("demo")
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
-                .responseFormat("json_object")
+//                .responseFormat("json_object")
                 .logRequests(true)
                 .logRequests(true)
                 .build();
