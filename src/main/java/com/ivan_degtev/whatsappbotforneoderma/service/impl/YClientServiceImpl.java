@@ -2,16 +2,22 @@ package com.ivan_degtev.whatsappbotforneoderma.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.ivan_degtev.whatsappbotforneoderma.controller.YClientController;
 import com.ivan_degtev.whatsappbotforneoderma.service.YClientService;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service
 @Slf4j
+@Getter
 public class YClientServiceImpl implements YClientService {
 
     private final WebClient webClient;
@@ -24,6 +30,8 @@ public class YClientServiceImpl implements YClientService {
     ) {
         this.webClient = webClientBuilder.baseUrl("https://api.yclients.com/api/v1").build();
     }
+
+
 
     /**
      * Выводит список доступных дат(в разных форматах) для брони.

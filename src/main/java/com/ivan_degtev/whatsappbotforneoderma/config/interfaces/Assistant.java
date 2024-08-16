@@ -16,4 +16,12 @@ public interface Assistant {
                     """
     )
     String chat(@MemoryId int memoryId, @UserMessage String userMessage);
+
+    @SystemMessage(
+            """
+                    You are a helpful assistant. Try to respond in a fair and warm manner.
+                    If you don't know answer, just tell it.
+                    """
+    )
+    String chat(@UserMessage String userMessage);
 }
