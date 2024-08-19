@@ -2,11 +2,17 @@ package com.ivan_degtev.whatsappbotforneoderma.config;
 
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
+import com.ivan_degtev.whatsappbotforneoderma.config.tools.AssistantToolsUsername;
+import com.ivan_degtev.whatsappbotforneoderma.controller.YClientController;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
+import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
+import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +22,11 @@ public class AIConfig {
 
     @Value("${open.ai.token}")
     private String openAiToken;
+    private final ServiceMapper serviceMapper;
+
+    public AIConfig(ServiceMapper serviceMapper) {
+        this.serviceMapper = serviceMapper;
+    }
 
     @Bean
     public AIAnalyzer aiServices() {
@@ -32,7 +43,8 @@ public class AIConfig {
     public Assistant assistant() {
         return AiServices.builder(Assistant.class)
                 .chatLanguageModel(chatLanguageModel())
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(1))
+                .tools()
                 .build();
     }
 
@@ -50,6 +62,15 @@ public class AIConfig {
 //                .responseFormat("json_object")
                 .logRequests(true)
                 .logRequests(true)
+                .build();
+    }
+
+    @Bean
+    public AssistantTest assistantTest() {
+        return AiServices.builder(AssistantTest.class)
+                .chatLanguageModel(chatLanguageModel())
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .tools(new Tools(serviceMapper))
                 .build();
     }
 }

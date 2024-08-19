@@ -3,6 +3,7 @@ package com.ivan_degtev.whatsappbotforneoderma.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ivan_degtev.whatsappbotforneoderma.model.interfaces.BaseEntity;
+import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,4 +41,8 @@ public class User implements BaseEntity {
     @JsonIgnore
     private List<Message> messages = new ArrayList<>();
 
+    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private List<Appointment> appointments;
 }

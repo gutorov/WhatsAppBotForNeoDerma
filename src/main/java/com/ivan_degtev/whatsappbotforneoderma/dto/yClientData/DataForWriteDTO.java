@@ -15,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
-public class DataForWhiteDTO {
+public class DataForWriteDTO {
     private String phone;
     @JsonProperty("full_name")
     private String fullName;
@@ -26,7 +26,7 @@ public class DataForWhiteDTO {
     @ToString
     public static class Appointments {
         @JsonProperty("service_id")
-        private String[] serviceId;
+        private List<Long> serviceId;
         @JsonProperty("staff_id")
         private String staffId;
         private LocalDateTime datetime;

@@ -3,6 +3,7 @@ package com.ivan_degtev.whatsappbotforneoderma.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+import dev.langchain4j.agent.tool.Tool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -49,8 +51,10 @@ public class YClientController {
     }
 
     @GetMapping(path = "/book_dates")
-    public Mono<String> getListDatesAvailableForBooking() {
-        return yclientService.getListDatesAvailableForBooking(companyId);
+    public Mono<String> getListDatesAvailableForBooking(
+            @RequestParam(name = "serviceIds", required = false) List<String> serviceIds
+    ) {
+        return yclientService.getListDatesAvailableForBooking(companyId, serviceIds);
     }
 
 
@@ -73,19 +77,34 @@ public class YClientController {
 
 
     @GetMapping(path = "/book_staff_seances")
-    public Mono<String> getListNearestAvailableSessions() {
-        return yclientService.getListNearestAvailableSessions(companyId);
+    public Mono<String> getListNearestAvailableSessions(
+            @RequestParam(name = "staffId") Long staffId
+    ) {
+        return yclientService.getListNearestAvailableSessions(companyId, staffId);
     }
 
+    /**
+     * Эта ручка используется когда нужно подобрать сотрудника - показывает всех, кто может оказать указанную(!) услугу(id)
+     * @return
+     */
     @GetMapping(path = "/book_staff")
-    public Mono<String> getListEmployeesAvailableForBooking() {
-        return yclientService.getListEmployeesAvailableForBooking(companyId);
+    public Mono<String> getListEmployeesAvailableForBooking(
+            @RequestParam(name = "service_ids", required = false) List<String> serviceIds,
+            @RequestParam(name = "datetime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datetime
+    ) {
+        return yclientService.getListEmployeesAvailableForBooking(companyId, serviceIds, datetime);
     }
 
     @GetMapping(path = "/book_times")
-    public Mono<String> getListSessionsAvailableForBooking() throws JsonProcessingException {
-        return yclientService.getListSessionsAvailableForBooking(companyId);
+    public Mono<String> getListSessionsAvailableForBooking(
+            @RequestParam(name = "staffId") Long staffId,
+            @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) throws JsonProcessingException {
+        return yclientService.getListSessionsAvailableForBooking(companyId, staffId, date);
     }
 
-
+    @Tool("Тебе нужно получить свободные даты для бронирования")
+    public String getFreeDateTool() {
+        return getListDatesAvailableForBooking(null).block();
+    }
 }

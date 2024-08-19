@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -41,18 +43,27 @@ public class YClientServiceImpl implements YClientService {
      * Общая инфа, не уверен, что в бизнес-логике будет использоваться, нужно более конкретная фильтрация
      */
     @Override
-    public Mono<String> getListDatesAvailableForBooking(Long companyId) {
+    public Mono<String> getListDatesAvailableForBooking(
+            Long companyId,
+            List<String> serviceIds
+    ) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/book_dates/{company_id}")
-                        .build(companyId))
+                .uri(uriBuilder -> {
+                    uriBuilder.path("/book_dates/{company_id}");
+                    if (serviceIds != null && !serviceIds.isEmpty()) {
+                        uriBuilder.queryParam("service_ids[]", serviceIds);
+                    }
+                    return uriBuilder
+                            .build(companyId);
+                })
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
                 .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch services: " + error.getMessage()));
+                .doOnError(error -> System.err.println("Failed to fetch dates: " + error.getMessage()));
     }
+
 
     /**
      * Здесь получаем все виды услуг.
@@ -102,8 +113,10 @@ public class YClientServiceImpl implements YClientService {
      *
      */
     @Override
-    public Mono<String> getListNearestAvailableSessions(Long companyId) {
-        Long staffId = 1592958L;
+    public Mono<String> getListNearestAvailableSessions(
+            Long companyId,
+            Long staffId
+    ) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/book_staff_seances/{company_id}/{staff_id}")
@@ -121,17 +134,31 @@ public class YClientServiceImpl implements YClientService {
      * ВАЖНО! Отсюда брать описание и ID!!
      */
     @Override
-    public Mono<String> getListEmployeesAvailableForBooking(Long companyId) {
+    public Mono<String> getListEmployeesAvailableForBooking(
+            Long companyId,
+            List<String> serviceIds,
+            LocalDateTime datetime
+    ) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/book_staff/{company_id}")
-                        .build(companyId))
+                .uri(uriBuilder -> {
+                    StringBuilder pathBuilder = new StringBuilder("/book_staff/{company_id}");
+                    if (serviceIds != null && !serviceIds.isEmpty()) {
+                        uriBuilder.queryParam("service_ids", serviceIds.toArray());
+                    }
+                    if (datetime != null) {
+                        uriBuilder.queryParam("datetime", datetime.format(DateTimeFormatter.ISO_DATE_TIME));
+                    }
+
+                    return uriBuilder
+                            .path(pathBuilder.toString())
+                            .build(companyId);
+                })
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
                 .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch services: " + error.getMessage()));
+                .doOnError(error -> System.err.println("Failed to fetch employees: " + error.getMessage()));
     }
 
     /**
@@ -140,18 +167,34 @@ public class YClientServiceImpl implements YClientService {
      * Время в ответе от яклиента указано в секундах!
      */
     @Override
-    public Mono<String> getListSessionsAvailableForBooking(Long companyId) {
-        Long staffId = 1592958L;
-        String date = "2024-08-16";
+    public Mono<String> getListSessionsAvailableForBooking(
+            Long companyId,
+            Long staffId,
+            LocalDate date
+
+    ) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/book_times/{company_id}/{staff_id}/{date}")
-                        .build(companyId, staffId, date))
+                .uri(uriBuilder -> {
+                    StringBuilder pathBuilder = new StringBuilder("/book_times/{company_id}");
+                    if (staffId != null) {
+                        pathBuilder.append("/{staff_id}");
+                    }
+                    if (date != null) {
+                        pathBuilder.append("/{date}");
+                    }
+                    return uriBuilder
+                            .path(pathBuilder.toString())
+                            .build(
+                                    companyId,
+                                    staffId != null ? staffId : "",
+                                    date != null ? date : ""
+                            );
+                })
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
                 .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch services: " + error.getMessage()));
+                .doOnError(error -> System.err.println("Failed to fetch sessions: " + error.getMessage()));
     }
 }
