@@ -4,6 +4,7 @@ import com.ivan_degtev.whatsappbotforneoderma.component.DailyScheduler;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
 import com.ivan_degtev.whatsappbotforneoderma.controller.YClientController;
+import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableStaffForBookingService;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.DataForWriteDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
@@ -96,7 +97,7 @@ public class LangChain4jService {
 //                );
 
 
-                List<ServiceInformation> serviceInformationList = dailyScheduler.getServicesInformationList();
+                List<ServiceInformationDTO> serviceInformationList = dailyScheduler.getServiceInformationDTOList();
                 String assistantAnswer = assistant.onlyServiceDialog(
                         serviceInformationList,
                         question

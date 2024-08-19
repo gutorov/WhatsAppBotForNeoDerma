@@ -2,6 +2,7 @@ package com.ivan_degtev.whatsappbotforneoderma.mapper.yClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 import lombok.AllArgsConstructor;
@@ -19,7 +20,7 @@ public class ServiceMapper {
     private final ObjectMapper objectMapper;
     private final ServiceInformationRepository serviceInformationRepository;
 
-    public List<ServiceInformation> mapJsonToServiceList(String json) {
+    public List<ServiceInformationDTO> mapJsonToServiceList(String json) {
         try {
             JsonNode rootNode = objectMapper.readTree(json);
             JsonNode servicesNode = rootNode.path("data").path("services");
@@ -35,15 +36,13 @@ public class ServiceMapper {
     }
 
     /**
-     * Первично при запуске парсим все сервисы и сохраняем в локал БД их базовую ирнформацию
-     * - внешний айди и название
+     * Первично при запуске парсим все сервисы и сохраняем  их базовую ирнформаци - внешний айди и название в дто
      */
-    private ServiceInformation mapJsonNodeToServiceDTO(JsonNode node) {
-        ServiceInformation serviceInformation = new ServiceInformation();
-        serviceInformation.setServiceId(node.path("id").asText());
-        serviceInformation.setTitle(node.path("title").asText());
+    private ServiceInformationDTO mapJsonNodeToServiceDTO(JsonNode node) {
+        ServiceInformationDTO serviceInformationDTO = new ServiceInformationDTO();
+        serviceInformationDTO.setServiceId(node.path("id").asText());
+        serviceInformationDTO.setTitle(node.path("title").asText());
 
-        serviceInformationRepository.save(serviceInformation);
-        return serviceInformation;
+        return serviceInformationDTO;
     }
 }

@@ -1,5 +1,6 @@
 package com.ivan_degtev.whatsappbotforneoderma.config.interfaces;
 
+import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableStaffForBookingService;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.DataForWriteDTO;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
@@ -66,10 +67,10 @@ public interface Assistant {
             """
                     Вы полезный ассистент салона красоты NeoDerma.
                     Ваша задача вести с клиентом диалог и привести его к записи на приём к мастеру на нужную услугу.
-                    Сейчас клиент указал только интересуется услугой, найдите во внутренней сушности {{serviceInformationList}}
+                    Сейчас клиент указал только интересуется услугой, найдите во внутренней сушности {{serviceInformationDTOList}}
                     есть ли такая услуга по названию или похожие и предложите ему эти варианты.
                     Если клиент просто ведёт речь об услугах - также предложите ему некоторые наши варианты
-                    из {{serviceInformationList}}.
+                    из {{serviceInformationDTOList}}.
                     Спросите какая дата и мастер интересуют клиента. Всегда отвечайте в человекопонятной форме.
                 
                     """
@@ -78,7 +79,7 @@ public interface Assistant {
             Клиент общается с вами о нужной ему услуге: {{message}}
             """)
     String onlyServiceDialog(
-            @V("serviceInformationList") List<ServiceInformation> serviceInformationList,
+            @V("serviceInformationDTOList") List<ServiceInformationDTO> serviceInformationDTOList,
             @V("message")String message
     );
 

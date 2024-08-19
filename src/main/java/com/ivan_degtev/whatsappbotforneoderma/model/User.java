@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -20,6 +21,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@ToString(exclude = { "messages" })
 public class User implements BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,7 +43,7 @@ public class User implements BaseEntity {
     @JsonIgnore
     private List<Message> messages = new ArrayList<>();
 
-    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private List<Appointment> appointments;

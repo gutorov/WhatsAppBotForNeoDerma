@@ -1,6 +1,7 @@
 package com.ivan_degtev.whatsappbotforneoderma.component;
 
 import com.ivan_degtev.whatsappbotforneoderma.controller.YClientController;
+import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
@@ -38,7 +39,7 @@ public class DailyScheduler {
     }
 
     private  List<EmployeeDTO> employeeDTOList;
-    private  List<ServiceInformation> servicesInformationList;
+    private  List<ServiceInformationDTO> serviceInformationDTOList;
 
     /**
      * Шедлер работает 1 раз в сутки для обновления первичных данных от ЯКлиента - имен сотрудников, названий процедур
@@ -57,8 +58,8 @@ public class DailyScheduler {
 
         Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking(null, null, null);
         servicesMono.subscribe(response -> {
-            servicesInformationList = serviceMapper.mapJsonToServiceList(response);
-            log.info("Services Data конвертированный лист с ДТО с данными об услугах: " + servicesInformationList);
+            serviceInformationDTOList = serviceMapper.mapJsonToServiceList(response);
+            log.info("Services Data конвертированный лист с ДТО с данными об услугах: " + serviceInformationDTOList);
         }, error -> log.error("Failed to fetch services data: " + error.getMessage()));
 
 

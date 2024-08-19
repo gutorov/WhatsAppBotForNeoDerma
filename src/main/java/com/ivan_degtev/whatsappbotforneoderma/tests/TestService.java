@@ -1,8 +1,21 @@
 package com.ivan_degtev.whatsappbotforneoderma.tests;
 
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
+import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
+import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
+import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
+import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiChatModelName;
+import dev.langchain4j.service.AiServices;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -10,24 +23,69 @@ import java.util.Scanner;
 
 @Service
 @Slf4j
-@AllArgsConstructor
 public class TestService {
-    private final ConfigTest configTest;
-    private final         AssistantTest assistantTest;
+    @Value("${open.ai.token}")
+    private String openAiToken;
+    private final ServiceMapper serviceMapper;
+    private final EmployeeMapper employeeMapper;
+    private final AppointmentsRepository appointmentsRepository;
+    private final ServiceInformationRepository serviceInformationRepository;
+    private final UserRepository userRepository;
 
+    public TestService(
+            @Value("${open.ai.token}") String openAiToken,
+            ServiceMapper serviceMapper,
+            EmployeeMapper employeeMapper,
+            AppointmentsRepository appointmentsRepository,
+            ServiceInformationRepository serviceInformationRepository,
+            UserRepository userRepository
+    ) {
+        this.openAiToken = openAiToken;
+        this.serviceMapper = serviceMapper;
+        this.employeeMapper = employeeMapper;
+        this.appointmentsRepository = appointmentsRepository;
+        this.serviceInformationRepository = serviceInformationRepository;
+        this.userRepository = userRepository;
+    }
 
     public void test11() {
+        User currentUser = new User();
+        currentUser.setChatId("111");
+
+        //тестовая модель
+        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
+                .apiKey(openAiToken)
+//                .apiKey("demo")
+                .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
+                .logRequests(true)
+                .logRequests(true)
+                .build();
+
+        //тестовый клиент ассистента для работы с модлеью
+        AssistantTest assistant = AiServices.builder(AssistantTest.class)
+                .chatLanguageModel(chatLanguageModel)
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .tools(new Tools(
+                        serviceMapper,
+//                        employeeMapper,
+                        serviceInformationRepository,
+                        appointmentsRepository,
+                        userRepository,
+                        currentUser
+                ))
+                .build();
+
 
         Scanner scanner = new Scanner(System.in);
 
 
-        while(true) {
+        while (true) {
             ServiceInformation serviceInformation = new ServiceInformation();
             String question = scanner.nextLine();
 
-            String answer = assistantTest.chat(serviceInformation, question);
+            String answer = assistant.chat(question);
             log.info("Ответ от тест чата {}", answer);
-            log.info("Чат также изменил объект serviceInformation {}", serviceInformation);
         }
     }
 }
+
