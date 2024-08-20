@@ -1,16 +1,10 @@
 package com.ivan_degtev.whatsappbotforneoderma.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.ivan_degtev.whatsappbotforneoderma.controller.YClientController;
 import com.ivan_degtev.whatsappbotforneoderma.service.YClientService;
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -26,6 +20,7 @@ import java.util.List;
 public class YClientServiceImpl implements YClientService {
 
     private final WebClient webClient;
+    private final Long companyId = 316398L;
 
     @Value("${yclient.token}")
     private String yclientToken;
@@ -44,7 +39,6 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListDatesAvailableForBooking(
-            Long companyId,
             List<String> serviceIds
     ) {
         return webClient.get()
@@ -75,7 +69,6 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListServicesAvailableForBooking(
-            Long companyId,
             Long staffId,
             LocalDateTime datetime,
             List<Long> serviceIds
@@ -114,7 +107,6 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListNearestAvailableSessions(
-            Long companyId,
             Long staffId
     ) {
         return webClient.get()
@@ -135,7 +127,6 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListEmployeesAvailableForBooking(
-            Long companyId,
             List<String> serviceIds,
             LocalDateTime datetime
     ) {
@@ -168,7 +159,6 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListSessionsAvailableForBooking(
-            Long companyId,
             Long staffId,
             LocalDate date
 

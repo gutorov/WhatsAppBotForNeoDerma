@@ -8,6 +8,7 @@ import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -28,6 +29,7 @@ import java.util.Scanner;
 public class TestService {
     @Value("${open.ai.token}")
     private String openAiToken;
+    private final YClientServiceImpl yClientService;
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
     private final AppointmentsRepository appointmentsRepository;
@@ -36,6 +38,7 @@ public class TestService {
 
     public TestService(
             @Value("${open.ai.token}") String openAiToken,
+            YClientServiceImpl yClientService,
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
             AppointmentsRepository appointmentsRepository,
@@ -43,6 +46,7 @@ public class TestService {
             UserRepository userRepository
     ) {
         this.openAiToken = openAiToken;
+        this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
         this.appointmentsRepository = appointmentsRepository;
@@ -72,6 +76,7 @@ public class TestService {
                 .chatLanguageModel(chatLanguageModel)
                 .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
                 .tools(new Tools(
+                        yClientService,
                         serviceMapper,
                         employeeMapper,
                         serviceInformationRepository,

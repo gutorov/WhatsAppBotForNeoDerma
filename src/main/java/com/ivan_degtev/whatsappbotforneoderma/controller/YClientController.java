@@ -54,7 +54,7 @@ public class YClientController {
     public Mono<String> getListDatesAvailableForBooking(
             @RequestParam(name = "serviceIds", required = false) List<String> serviceIds
     ) {
-        return yclientService.getListDatesAvailableForBooking(companyId, serviceIds);
+        return yclientService.getListDatesAvailableForBooking(serviceIds);
     }
 
 
@@ -72,7 +72,7 @@ public class YClientController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datetime,
             @RequestParam(name = "serviceIds", required = false) List<Long> serviceIds
     ) {
-        return yclientService.getListServicesAvailableForBooking(companyId, staffId, datetime, serviceIds);
+        return yclientService.getListServicesAvailableForBooking(staffId, datetime, serviceIds);
     }
 
 
@@ -80,7 +80,7 @@ public class YClientController {
     public Mono<String> getListNearestAvailableSessions(
             @RequestParam(name = "staffId") Long staffId
     ) {
-        return yclientService.getListNearestAvailableSessions(companyId, staffId);
+        return yclientService.getListNearestAvailableSessions(staffId);
     }
 
     /**
@@ -92,7 +92,7 @@ public class YClientController {
             @RequestParam(name = "service_ids", required = false) List<String> serviceIds,
             @RequestParam(name = "datetime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datetime
     ) {
-        return yclientService.getListEmployeesAvailableForBooking(companyId, serviceIds, datetime);
+        return yclientService.getListEmployeesAvailableForBooking(serviceIds, datetime);
     }
 
     @GetMapping(path = "/book_times")
@@ -100,11 +100,7 @@ public class YClientController {
             @RequestParam(name = "staffId") Long staffId,
             @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) throws JsonProcessingException {
-        return yclientService.getListSessionsAvailableForBooking(companyId, staffId, date);
+        return yclientService.getListSessionsAvailableForBooking(staffId, date);
     }
 
-    @Tool("Тебе нужно получить свободные даты для бронирования")
-    public String getFreeDateTool() {
-        return getListDatesAvailableForBooking(null).block();
-    }
 }
