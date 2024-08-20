@@ -26,8 +26,9 @@ public interface YClientService {
             LocalDateTime datetime
     );
     Mono<String> getListSessionsAvailableForBooking(
+            String date,
             Long staffId,
-            LocalDate date
+            List<String> serviceIds
     );
 
 }

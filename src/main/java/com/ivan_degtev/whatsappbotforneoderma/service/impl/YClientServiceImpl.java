@@ -169,9 +169,9 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListSessionsAvailableForBooking(
+            String date,
             Long staffId,
-            LocalDate date
-
+            List<String> serviceIds
     ) {
         return webClient.get()
                 .uri(uriBuilder -> {
@@ -179,8 +179,11 @@ public class YClientServiceImpl implements YClientService {
                     if (staffId != null) {
                         pathBuilder.append("/{staff_id}");
                     }
-                    if (date != null) {
+                    if (date != null && !date.isEmpty()) {
                         pathBuilder.append("/{date}");
+                    }
+                    if (serviceIds != null && !serviceIds.isEmpty()) {
+                        uriBuilder.queryParam("service_ids", serviceIds.toArray());
                     }
                     return uriBuilder
                             .path(pathBuilder.toString())
@@ -197,4 +200,5 @@ public class YClientServiceImpl implements YClientService {
                 .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
                 .doOnError(error -> System.err.println("Failed to fetch sessions: " + error.getMessage()));
     }
+
 }

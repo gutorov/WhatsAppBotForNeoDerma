@@ -89,17 +89,19 @@ public class YClientController {
     @GetMapping(path = "/book_staff")
     public Mono<String> getListEmployeesAvailableForBooking(
             @RequestParam(name = "service_ids", required = false) List<String> serviceIds,
-            @RequestParam(name = "datetime", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datetime
+            @RequestParam(name = "datetime", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime datetime
     ) {
         return yclientService.getListEmployeesAvailableForBooking(serviceIds, datetime);
     }
 
     @GetMapping(path = "/book_times")
     public Mono<String> getListSessionsAvailableForBooking(
+            @RequestParam(name = "date") String date,
             @RequestParam(name = "staffId") Long staffId,
-            @RequestParam(name = "date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam(name = "serviceIds", required = false) List<String> serviceIds
     ) throws JsonProcessingException {
-        return yclientService.getListSessionsAvailableForBooking(staffId, date);
+        return yclientService.getListSessionsAvailableForBooking(date, staffId, serviceIds);
     }
 
 }

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -150,27 +151,6 @@ public class Tools {
             log.warn("Сотрудник с таким id не найден: {}", staffId);
             throw new NotFoundException("Сотрудник с таким id не найден");
         }
-
-//        if (staffName == null || staffName.isEmpty()) {
-//            throw new NotFoundException("В тул с записью выбранного сотрудника в БД LLM передала пустое имя");
-//        }
-//
-//        String response = yClientService.getListEmployeesAvailableForBooking(
-//                null, null
-//        ).block();
-//        List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
-//        for (EmployeeDTO employeeDTO : employeeDTOList) {
-//            if (employeeDTO.getName().toLowerCase().contains(staffName.toLowerCase())) {
-//                String staffId = employeeDTO.getId();
-//                appointment.setStaffId(staffId);
-//                appointmentsRepository.save(appointment);
-//                log.info("сохранил в БД обновленную запись с id сотрудника {}", appointment.toString());
-//            }
-//            log.warn("Сотрудник с таким именем не найден: {}", staffName);
-//            throw new NotFoundException("Сотрудник с таким названием не найден");
-
-//        Передай в метод полное имя выбранного сотрудника, например 'хочу к Кристине Сергеевне', передай строку 'Кристина Сергеевна'
-//        }
     }
 
     @Tool("""
@@ -178,7 +158,7 @@ public class Tools {
             Клиент уже назвал желаемую услугу и выбрал специалиста. Передай в метод выбранные им id услуги {{serviceId}}
             и id сотрудника {{staffId}}
             В ответ ты получишь список с данными по свободным сеансам для брони(дату, время и длину сеанса) 
-            - выведи их клиенту.
+            - выведи эти данные клиенту.
             """)
     public List<AvailableSessionDTO> getListNearestAvailableSessions(
             String serviceId,
@@ -202,6 +182,58 @@ public class Tools {
         return availableSessionDTOS;
     }
 
+    @Tool("""
+            Сейчас клиент интересуется можно ли записаться на сеанс строго на определённую дату.
+            Клиент уже назвал нужную ему дату, желаемую услугу и выбрал специалиста.
+            Передай в метод выбранные им дату {{date}}, id услуги {{serviceId}} и id сотрудника {{staffId}}
+            В ответ ты получишь список с данными по свободным сеансам для брони(дату, время и длину сеанса)
+            - выведи эти данные клиенту.
+            """)
+    public List<AvailableSessionDTO> getListNearestAvailableSessionsForSpecificDate(
+            String date,
+            String serviceId,
+            String staffId
+    ) {
+        String response = yClientService.getListSessionsAvailableForBooking(
+                date,
+                Long.valueOf(serviceId),
+                List.of(staffId))
+                .block();
+        List<AvailableSessionDTO> availableSessionDTOS = availableSessionMapper.mapJsonToAvailableSessionList(response);
+        log.info("Получил из мапера лист с доступными сеансами для брони строго на заданную дату {}",
+                availableSessionDTOS.stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(", ")));
+        return availableSessionDTOS;
+    }
+    @Tool("""
+            Если клиент точно выбрал и подтвердил на какую дату и время ему необходима запись.
+            Ранее он выбрал сотрудника и услугу. Дата и время, указанные клиентом совпадают с информацией о доступных
+            датах {{availableSessionDTOS}}, которую ты получал ранее.
+            Пойми из контекста твёрдость решения пользователя.
+            Передай в метод эту дату и время {{dateTime}} в формате iso8601
+            и данные о доступных датах {{availableSessionDTOS}}
+            """)
+    public void confirmationOfDateSelection(
+            String dateTime,
+            List<AvailableSessionDTO> availableSessionDTOS
+    ) {
+        if (dateTime != null &&
+                !dateTime.isEmpty() &&
+                availableSessionDTOS
+                        .stream()
+                        .anyMatch(dto -> dateTime.equals(dto.getDateTime()))
+        ) {
+            appointment.setDatetime(LocalDateTime.parse(dateTime));
+            appointmentsRepository.save(appointment);
+            log.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}", appointment.toString());
+        } else {
+            log.warn("Указанная клиентом дата либо пустая, либо отсутствует в списке доступных дат для бронирования: {}",
+                    dateTime);
+            throw new NotFoundException("Указанная клиентом дата либо пустая, " +
+                    "либо отсутствует в списке доступных дат для бронирования");
+        }
+    }
 
     /**
      * Отдаёт лист дто со всей базовой инфой по услугам - айди и название, без параметров, вообще все
