@@ -18,5 +18,6 @@ public class AvailableSessionDTO {
     @JsonProperty("seance_length")
     private Integer seanceLength;
     @JsonProperty("date_time")
-    private OffsetDateTime dateTime;
+    private String dateTime;
+//    private OffsetDateTime dateTime;
 }

@@ -39,7 +39,7 @@ public class AvailableSessionMapper {
         AvailableSessionDTO availableSessionDTO = new AvailableSessionDTO();
         availableSessionDTO.setTime(node.path("time").asText());
         availableSessionDTO.setSeanceLength(node.path("seance_length").asInt());
-        availableSessionDTO.setDateTime(OffsetDateTime.parse(node.path("datetime").asText()));
+        availableSessionDTO.setDateTime(node.path("datetime").asText());
         return availableSessionDTO;
     }
 }
