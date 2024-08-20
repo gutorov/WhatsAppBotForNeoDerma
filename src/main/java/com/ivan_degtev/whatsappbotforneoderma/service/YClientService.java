@@ -18,7 +18,8 @@ public interface YClientService {
             List<Long> serviceIds
     );
     Mono<String> getListNearestAvailableSessions(
-            Long staffId
+            Long staffId,
+            List<String> serviceIds
     );
     Mono<String> getListEmployeesAvailableForBooking(
             List<String> serviceIds,

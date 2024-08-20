@@ -1,8 +1,11 @@
 package com.ivan_degtev.whatsappbotforneoderma.tests;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
+import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableSessionDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
+import com.ivan_degtev.whatsappbotforneoderma.exception.NoParameterException;
 import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
@@ -11,30 +14,24 @@ import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
-import com.ivan_degtev.whatsappbotforneoderma.service.YClientService;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import dev.langchain4j.agent.tool.Tool;
-import jdk.jfr.Label;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
-import reactor.core.publisher.Mono;
 
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class Tools {
     private final YClientServiceImpl yClientService;
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
+    private final AvailableSessionMapper availableSessionMapper;
+
     private final WebClient webClient = WebClient.builder().build();
     private final ServiceInformationRepository serviceInformationRepository;
     private final AppointmentsRepository appointmentsRepository;
@@ -51,6 +48,7 @@ public class Tools {
             YClientServiceImpl yClientService,
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
+            AvailableSessionMapper availableSessionMapper,
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
             UserRepository userRepository,
@@ -61,6 +59,7 @@ public class Tools {
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
+        this.availableSessionMapper = availableSessionMapper;
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
@@ -173,6 +172,36 @@ public class Tools {
 //        Передай в метод полное имя выбранного сотрудника, например 'хочу к Кристине Сергеевне', передай строку 'Кристина Сергеевна'
 //        }
     }
+
+    @Tool("""
+            Сейчас клиент интересуется самым ближайшим временем, когда можно забронировать.
+            Клиент уже назвал желаемую услугу и выбрал специалиста. Передай в метод выбранные им id услуги {{serviceId}}
+            и id сотрудника {{staffId}}
+            В ответ ты получишь список с данными по свободным сеансам для брони(дату, время и длину сеанса) 
+            - выведи их клиенту.
+            """)
+    public List<AvailableSessionDTO> getListNearestAvailableSessions(
+            String serviceId,
+            String staffId
+    ) {
+        if (staffId == null || staffId.isEmpty()) {
+            throw new NoParameterException("Не был передам id услуги для которой нужно произвести поиск свободных для " +
+                    "бронирования сенсов!");
+        }
+        List<String> listWithServiceIds = List.of(serviceId);
+        String response = yClientService.getListNearestAvailableSessions(
+                Long.valueOf(staffId),
+                listWithServiceIds)
+                .block();
+        List<AvailableSessionDTO> availableSessionDTOS =
+                availableSessionMapper.mapJsonToAvailableSessionList(response);
+        log.info("Получил из мапера лист с доступными сеансами для брони {}",
+                availableSessionDTOS.stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(", ")));
+        return availableSessionDTOS;
+    }
+
 
     /**
      * Отдаёт лист дто со всей базовой инфой по услугам - айди и название, без параметров, вообще все

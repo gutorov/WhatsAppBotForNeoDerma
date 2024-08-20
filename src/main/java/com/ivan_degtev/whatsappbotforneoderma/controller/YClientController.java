@@ -50,6 +50,9 @@ public class YClientController {
         this.yclientService = yclientService;
     }
 
+    /**
+     * Просто поулчить все даты когда можно записаться хоть куда то
+     */
     @GetMapping(path = "/book_dates")
     public Mono<String> getListDatesAvailableForBooking(
             @RequestParam(name = "serviceIds", required = false) List<String> serviceIds
@@ -59,10 +62,6 @@ public class YClientController {
 
 
     /**
-     *
-     * @param staffId
-     * @param datetime
-     * @param serviceIds
      * @return JSON с уже занятыми часами у данного сотрудника
      */
     @GetMapping(path = "/book_services")
@@ -78,14 +77,14 @@ public class YClientController {
 
     @GetMapping(path = "/book_staff_seances")
     public Mono<String> getListNearestAvailableSessions(
-            @RequestParam(name = "staffId") Long staffId
+            @RequestParam(name = "staffId") Long staffId,
+            @RequestParam(name = "service_ids", required = false) List<String> serviceIds
     ) {
-        return yclientService.getListNearestAvailableSessions(staffId);
+        return yclientService.getListNearestAvailableSessions(staffId, serviceIds);
     }
 
     /**
      * Эта ручка используется когда нужно подобрать сотрудника - показывает всех, кто может оказать указанную(!) услугу(id)
-     * @return
      */
     @GetMapping(path = "/book_staff")
     public Mono<String> getListEmployeesAvailableForBooking(

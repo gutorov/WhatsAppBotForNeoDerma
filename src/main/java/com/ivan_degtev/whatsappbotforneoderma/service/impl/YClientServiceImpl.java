@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -98,7 +99,7 @@ public class YClientServiceImpl implements YClientService {
     /**
      * Метод показывает ближайший доступный сеанс по заданному сотруднику.
      * Принимает id компании(константа) и id сотруника(пока захардкожен - ИЗМЕНИТЬ)
-     * По факту возвращаются данные о ближайщем дне, где есть окна, но указаны именно занятые слоты
+     * По факту возвращаются данные о ближайщем дне, где есть окна
      * (схоже с методом getListSessionsAvailableForBooking, но без указания конкретной даты - берётся сама близкая)
      * ДЛя работы с LLM нужно дать доп инфу о
      * часах работы, длине различных процедур,
@@ -107,12 +108,21 @@ public class YClientServiceImpl implements YClientService {
      */
     @Override
     public Mono<String> getListNearestAvailableSessions(
-            Long staffId
+            Long staffId,
+            List<String> serviceIds
     ) {
         return webClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/book_staff_seances/{company_id}/{staff_id}")
-                        .build(companyId, staffId))
+                .uri(uriBuilder -> {
+                    StringBuilder pathBuilder = new StringBuilder("/book_staff_seances/{company_id}/{staff_id}");
+
+                    if (serviceIds != null && !serviceIds.isEmpty()) {
+                        uriBuilder.queryParam("service_ids", serviceIds.toArray());
+                    }
+
+                    return uriBuilder
+                            .path(pathBuilder.toString())
+                            .build(companyId, staffId);
+                })
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()

@@ -1,5 +1,6 @@
 package com.ivan_degtev.whatsappbotforneoderma.tests;
 
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
@@ -30,8 +31,11 @@ public class TestService {
     @Value("${open.ai.token}")
     private String openAiToken;
     private final YClientServiceImpl yClientService;
+
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
+    private final AvailableSessionMapper availableSessionMapper;
+
     private final AppointmentsRepository appointmentsRepository;
     private final ServiceInformationRepository serviceInformationRepository;
     private final UserRepository userRepository;
@@ -41,6 +45,7 @@ public class TestService {
             YClientServiceImpl yClientService,
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
+            AvailableSessionMapper availableSessionMapper,
             AppointmentsRepository appointmentsRepository,
             ServiceInformationRepository serviceInformationRepository,
             UserRepository userRepository
@@ -49,6 +54,7 @@ public class TestService {
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
+        this.availableSessionMapper = availableSessionMapper;
         this.appointmentsRepository = appointmentsRepository;
         this.serviceInformationRepository = serviceInformationRepository;
         this.userRepository = userRepository;
@@ -79,6 +85,7 @@ public class TestService {
                         yClientService,
                         serviceMapper,
                         employeeMapper,
+                        availableSessionMapper,
                         serviceInformationRepository,
                         appointmentsRepository,
                         userRepository,
