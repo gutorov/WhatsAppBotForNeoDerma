@@ -54,7 +54,7 @@ public class AIConfig {
                 .apiKey(openAiToken)
 //                .apiKey("demo")
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
-//                .responseFormat("json_object")
+                .responseFormat("json_object")
                 .logRequests(true)
                 .logRequests(true)
                 .build();

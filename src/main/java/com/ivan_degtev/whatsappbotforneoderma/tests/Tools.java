@@ -31,13 +31,14 @@ import java.util.List;
 @Slf4j
 public class Tools {
     private final ServiceMapper serviceMapper;
-//    private final EmployeeMapper employeeMapper;
+    private final EmployeeMapper employeeMapper;
     private final WebClient webClient = WebClient.builder().build();
     private final ServiceInformationRepository serviceInformationRepository;
     private final AppointmentsRepository appointmentsRepository;
     private final UserRepository userRepository;
     private User user;
-
+    private Appointment appointment;
+    private ServiceInformation serviceInformation;
 
     private static final String yclientToken = System.getenv("yclient.token");
     private static final Long companyId = 316398L;
@@ -46,18 +47,22 @@ public class Tools {
 
     public Tools(
             ServiceMapper serviceMapper,
-//            EmployeeMapper employeeMapper,
+            EmployeeMapper employeeMapper,
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
             UserRepository userRepository,
-            User user
+            User user,
+            Appointment appointment,
+            ServiceInformation serviceInformation
     ) {
         this.serviceMapper = serviceMapper;
-//        this.employeeMapper = employeeMapper;
+        this.employeeMapper = employeeMapper;
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
         this.user = user;
+        this.appointment = appointment;
+        this.serviceInformation = serviceInformation;
     }
 
     public String getListDatesAvailableForBooking() {
@@ -152,32 +157,33 @@ public class Tools {
         for (ServiceInformationDTO service : serviceInformationList) {
             if (service.getTitle().toLowerCase().contains(serviceName.toLowerCase())) {
 //                return service.getServiceId();
-                Appointment appointment = new Appointment();
-                ServiceInformation currentServiceInformation = new ServiceInformation(); //запись на сеанс дто
-                currentServiceInformation.setServiceId(service.getServiceId());
-                appointment.setServicesInformation(List.of(currentServiceInformation));
+//                Appointment appointment = new Appointment();
+//                ServiceInformation currentServiceInformation = new ServiceInformation();
+                serviceInformation.setServiceId(service.getServiceId());
+                appointment.setServicesInformation(List.of(serviceInformation));
                 user.setAppointments(List.of(appointment));
                 userRepository.save(user);
                 log.info("Нашёл совпадение по имени услуги и записал в сущность и сохранил в юзера {}",
-                        currentServiceInformation.toString());
-                return currentServiceInformation;
+                        serviceInformation.toString());
+                return serviceInformation;
             }
         }
         log.warn("Услуга не найдена: {}", serviceName);
         throw new NotFoundException("Услуга с таким названием не найдена");
     }
 
-//    @Tool("""
-//            Поиск всех сотрудников, которые оказывают выбранную клиентом услугу. Если клиент спрашивает кто может оказать
-//            ему выбранную услугу - нужно найти всех и дать ему информацию о сотрудниках
-//            """)
-//    public List<EmployeeDTO> getListEmployeesForCurrentServices(ServiceInformation serviceInformation) {
-//        String serviceId = serviceInformation.getServiceId();
-//        String staffs = getListEmployeesAvailableForBooking(serviceId);
-////        List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(staffs);
-//        List<EmployeeDTO> employeeDTOList = new ArrayList<>(); // пустой список вместо маппинга
-//
-//        log.info("Staff Data - конвертированный лист с ДТО с данными о работниках: " + employeeDTOList);
-//        return employeeDTOList;
-//    }
+    @Tool("""
+            Получить всех сотрудников, которые оказывают выбранную клиентом услугу и дать информацию клиенту.
+            Если клиент называет точное имя, например 'хочу к Кристине Сергеевне', передай строку 'Кристина Сергеевна'.
+            Если пользователю не важен мастер или ему подходит любой - передай пустую строку.
+            """)
+    public List<EmployeeDTO> getListEmployeesForCurrentServices(String  staffName) {
+
+        String serviceId = serviceInformation.getServiceId();
+        String staffs = getListEmployeesAvailableForBooking(serviceId);
+        List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(staffs);
+
+        log.info("Staff Data - конвертированный лист с ДТО с данными о работниках: " + employeeDTOList);
+        return employeeDTOList;
+    }
 }

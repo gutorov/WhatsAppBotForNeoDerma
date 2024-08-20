@@ -3,6 +3,7 @@ package com.ivan_degtev.whatsappbotforneoderma.tests;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
+import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Scanner;
 
 @Service
@@ -51,6 +53,10 @@ public class TestService {
     public void test11() {
         User currentUser = new User();
         currentUser.setChatId("111");
+        Appointment appointment = new Appointment();
+        ServiceInformation serviceInformation = new ServiceInformation();
+        appointment.setServicesInformation(List.of(serviceInformation));
+        currentUser.setAppointments(List.of(appointment));
 
         //тестовая модель
         ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
@@ -67,11 +73,13 @@ public class TestService {
                 .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
                 .tools(new Tools(
                         serviceMapper,
-//                        employeeMapper,
+                        employeeMapper,
                         serviceInformationRepository,
                         appointmentsRepository,
                         userRepository,
-                        currentUser
+                        currentUser,
+                        appointment,
+                        serviceInformation
                 ))
                 .build();
 
@@ -80,7 +88,6 @@ public class TestService {
 
 
         while (true) {
-            ServiceInformation serviceInformation = new ServiceInformation();
             String question = scanner.nextLine();
 
             String answer = assistant.chat(question);
