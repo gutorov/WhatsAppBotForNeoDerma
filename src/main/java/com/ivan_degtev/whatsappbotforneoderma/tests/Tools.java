@@ -69,68 +69,6 @@ public class Tools {
         this.serviceInformation = serviceInformation;
     }
 
-//    public String getListDatesAvailableForBooking() {
-//        String response = webClient.get()
-//                .uri(uriBuilder -> {
-//                    UriBuilder builder = uriBuilder
-//                            .scheme("https")
-//                            .host("api.yclients.com")
-//                            .path("/api/v1/book_dates/{company_id}");
-//                    return builder.build(companyId);
-//                })
-//                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
-//                .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
-//                .retrieve()
-//                .bodyToMono(String.class)
-//                .block();
-//        return response;
-//    }
-//
-//    /**
-//     * Просто инфа о всех сервисах
-//     */
-//    public List<ServiceInformationDTO> getServicesInformation() {
-//        String response =  webClient.get()
-//                .uri(uriBuilder -> {
-//                    UriBuilder builder = uriBuilder
-//                            .scheme("https")
-//                            .host("api.yclients.com")
-//                            .path("/api/v1/book_services/{company_id}");
-//                    return builder.build(companyId);
-//                })
-//                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
-//                .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
-//                .retrieve()
-//                .bodyToMono(String.class)
-//                .block();
-//        return servicesInformationDTOList = serviceMapper.mapJsonToServiceList(response);
-//    }
-//
-//    /**
-//     * Получить всех сотрудников, что выполняют услугу
-//     */
-//    public String getListEmployeesAvailableForBooking(String serviceIds) {
-//        return webClient.get()
-//                .uri(uriBuilder -> {
-//                    uriBuilder = uriBuilder
-//                            .scheme("https")
-//                            .host("api.yclients.com")
-//                            .path("/api/v1/book_staff/{company_id}");
-//
-//                    if (serviceIds != null && !serviceIds.isEmpty()) {
-//                        uriBuilder.queryParam("service_ids", serviceIds);
-//                    }
-//                    return uriBuilder.build(companyId);
-//                })
-//                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
-//                .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
-//                .retrieve()
-//                .bodyToMono(String.class)
-//                .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-//                .doOnError(error -> System.err.println("Failed to fetch employees: " + error.getMessage()))
-//                .block();
-//    }
-
     @Tool("""
             Получить свободные даты для записи и вывести в человекочитаемом формате. Если дат очень много
             вывести результат в формате "свободны от - и до - "
@@ -152,21 +90,23 @@ public class Tools {
 
     @Tool("""
     По запросу пользователя найди услугу и запиши её serviceId в объект.
-    Например, если пользователь говорит "запишите меня на дизайн стрижку", найди ID услуги "дизайнерская стрижка".
+    Например, если пользователь говорит "запишите меня на дизайн стрижку", найди и верни ID услуги "дизайнерская стрижка".
     """)
     @Transactional
-    public ServiceInformation getIdService(String serviceName) {
+    public String getIdService(String serviceName) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
 
         for (ServiceInformationDTO service : serviceInformationList) {
             if (service.getTitle().toLowerCase().contains(serviceName.toLowerCase())) {
-                serviceInformation.setServiceId(service.getServiceId());
+                String serviceId = service.getServiceId();
+
+                serviceInformation.setServiceId(serviceId);
                 appointment.setServicesInformation(List.of(serviceInformation));
                 user.setAppointments(List.of(appointment));
                 userRepository.save(user);
                 log.info("Нашёл совпадение по имени услуги и записал в сущность и сохранил в юзера {}",
                         serviceInformation.toString());
-                return serviceInformation;
+                return serviceId;
             }
         }
         log.warn("Услуга не найдена: {}", serviceName);
@@ -174,22 +114,65 @@ public class Tools {
     }
 
     @Tool("""
-            Получить всех сотрудников, которые оказывают выбранную клиентом услугу и дать информацию клиенту.
-            Если клиент называет точное имя, например 'хочу к Кристине Сергеевне', передай строку 'Кристина Сергеевна'.
-            Если пользователю не важен мастер или ему подходит любой - передай пустую строку.
+            Дать информацию клиенту обо всех доступных для бронирования сотрудниках.
+            Если клиент указал название услуги - передай ее id в {{serviceId}}
+            Если клиент назвал какое-то имя сотрудника ранее - сравни данные из полученного в результате листа с именем,
+            которое он назвал и ответь, есть ли указанный сотрудник в списке бронирования.
             """)
-    public List<EmployeeDTO> getListEmployeesForCurrentServices(String staffName) {
+    public List<EmployeeDTO> getListEmployeesForCurrentServices(String serviceId) {
 
-        String serviceId = serviceInformation.getServiceId();
-        String staffs = yClientService.getListEmployeesAvailableForBooking
-                (List.of(serviceId), null)
-                .block();
+        String staffs;
+        if (serviceId != null || !serviceId.isEmpty()) {
+             staffs = yClientService.getListEmployeesAvailableForBooking
+                            (List.of(serviceId), null)
+                    .block();
+        } else {
+            staffs = yClientService.getListEmployeesAvailableForBooking
+                            (null, null)
+                    .block();
+        }
+
         List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(staffs);
 
         log.info("Staff Data - конвертированный лист с ДТО с данными о работниках: " + employeeDTOList);
         return employeeDTOList;
     }
+    @Tool("""
+            Если пользователь точно выбрал и подтвердил к какому сотруднику он намерен пойти.
+            Пойми из контекста твёрдость решения пользователя. Можно задать уточняющий вопрос.
+            Передай в метод id этого сотрудника в поле {{staffId}}
+            """)
+    public void confirmationOfEmployeeSelection(String staffId) {
+        if (staffId != null && !staffId.isEmpty()) {
+            appointment.setStaffId(staffId);
+            appointmentsRepository.save(appointment);
+            log.info("сохранил в БД обновленную запись с id сотрудника {}", appointment.toString());
+        } else {
+            log.warn("Сотрудник с таким id не найден: {}", staffId);
+            throw new NotFoundException("Сотрудник с таким id не найден");
+        }
 
+//        if (staffName == null || staffName.isEmpty()) {
+//            throw new NotFoundException("В тул с записью выбранного сотрудника в БД LLM передала пустое имя");
+//        }
+//
+//        String response = yClientService.getListEmployeesAvailableForBooking(
+//                null, null
+//        ).block();
+//        List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
+//        for (EmployeeDTO employeeDTO : employeeDTOList) {
+//            if (employeeDTO.getName().toLowerCase().contains(staffName.toLowerCase())) {
+//                String staffId = employeeDTO.getId();
+//                appointment.setStaffId(staffId);
+//                appointmentsRepository.save(appointment);
+//                log.info("сохранил в БД обновленную запись с id сотрудника {}", appointment.toString());
+//            }
+//            log.warn("Сотрудник с таким именем не найден: {}", staffName);
+//            throw new NotFoundException("Сотрудник с таким названием не найден");
+
+//        Передай в метод полное имя выбранного сотрудника, например 'хочу к Кристине Сергеевне', передай строку 'Кристина Сергеевна'
+//        }
+    }
 
     /**
      * Отдаёт лист дто со всей базовой инфой по услугам - айди и название, без параметров, вообще все

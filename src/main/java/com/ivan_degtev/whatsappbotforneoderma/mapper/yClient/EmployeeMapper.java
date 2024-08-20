@@ -41,6 +41,9 @@ public class EmployeeMapper {
         }
     }
 
+    /**
+     * Мапит общую инфу по сотрудникам
+     */
     public List<EmployeeDTO> mapJsonToEmployeeList(String json) {
         try {
             JsonNode rootNode = objectMapper.readTree(json);
