@@ -3,18 +3,25 @@ package com.ivan_degtev.whatsappbotforneoderma.tests;
 import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableSessionDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
+import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.FreeSessionForBookDTO;
+
 import com.ivan_degtev.whatsappbotforneoderma.exception.NoParameterException;
 import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
+
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
+
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
+
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+
 import dev.langchain4j.agent.tool.Tool;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +39,7 @@ public class Tools {
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
     private final AvailableSessionMapper availableSessionMapper;
+    private final AnswerCheckMapper answerCheckMapper;
 
     private final WebClient webClient = WebClient.builder().build();
     private final ServiceInformationRepository serviceInformationRepository;
@@ -50,6 +58,7 @@ public class Tools {
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
             AvailableSessionMapper availableSessionMapper,
+            AnswerCheckMapper answerCheckMapper,
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
             UserRepository userRepository,
@@ -61,6 +70,7 @@ public class Tools {
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
         this.availableSessionMapper = availableSessionMapper;
+        this.answerCheckMapper = answerCheckMapper;
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
@@ -80,8 +90,11 @@ public class Tools {
     }
     @Tool("""
             Получить List со всеми услугами, в этом листе есть базовая информация - названия услуг и их внутренний id
-            для дальнейшего поиска. Исходя из запроса клиента - выведи внутренний id услуги, которая ему нужна.
+            для дальнейшего поиска.
+            Исходя из запроса клиента - выведи общую информацию об услуге, которая ему нужна или предложи варианты 
+            похожих услуг.
             """)
+    //внутренний id услуги
     public List<ServiceInformationDTO> getAllServices(String question) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
                 log.info("Тул вывел все услуги {}", serviceInformationList);
@@ -89,10 +102,11 @@ public class Tools {
     }
 
     @Tool("""
-    По запросу пользователя найди услугу и запиши её serviceId в объект.
-    Например, если пользователь говорит "запишите меня на дизайн стрижку", найди и верни ID услуги "дизайнерская стрижка".
+    Если клиент решил на какую услугу он хочет - найди услугу по ее названию {{serviceName}}.
+    Например, если пользователь говорит "запишите меня на дизайн стрижку", найди и запомни ID услуги "дизайнерская стрижка".
     """)
     @Transactional
+    //и запиши её serviceId в объект
     public String getIdService(String serviceName) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
 
@@ -196,8 +210,8 @@ public class Tools {
     ) {
         String response = yClientService.getListSessionsAvailableForBooking(
                 date,
-                Long.valueOf(serviceId),
-                List.of(staffId))
+                Long.valueOf(staffId),
+                List.of(serviceId))
                 .block();
         List<AvailableSessionDTO> availableSessionDTOS = availableSessionMapper.mapJsonToAvailableSessionList(response);
         log.info("Получил из мапера лист с доступными сеансами для брони строго на заданную дату {}",
@@ -234,6 +248,53 @@ public class Tools {
                     "либо отсутствует в списке доступных дат для бронирования");
         }
     }
+    @Tool("""
+            Последний инструмент в цепочки взаимодействий с клиентом. Клиент выбрал и подтвердил услугу, сотрудника и дату
+            со временем, на которые он записывается. Эти данные были обозначены и также сохранены во внутренние
+            сущности {{appointment}} и {{serviceInformation}}.
+            Здесь происходит финальная проверка - если все успешно - с клиентом можно попрощаться, если есть проблемы -
+            значит какая-то информация не была сохранена и ее нужно уточнить.
+            """)
+    public boolean finalPartDialog(
+//            Appointment appointment,
+//            ServiceInformation serviceInformation
+    ) {
+
+            if (appointment.getDatetime() == null) {
+                throw new NoParameterException("В сущности appointment не сохранена дата и время записи на приём");
+            }
+            if (appointment.getStaffId() == null) {
+                throw new NoParameterException("В сущности appointment не сохранен id сотрудника к которому нужно " +
+                        "записаться на приём");
+            }
+            if (appointment.getServicesInformation() == null) {
+                throw new NoParameterException("В сущности appointment нет связи с сущностью ServiceInformation," +
+                        "которая хранит данные о забронированных услугах");
+            }
+            if (serviceInformation.getServiceId() == null) {
+                throw new NoParameterException("В сущности serviceInformation не сохранен id услуги для записи на приём");
+            }
+            String finalCheck =  yClientService.getListSessionsAvailableForBooking(
+                    String.valueOf(appointment.getDatetime()),
+                    Long.valueOf(appointment.getStaffId()),
+                    List.of(serviceInformation.getServiceId())
+            ).block();
+        FreeSessionForBookDTO freeSessionForBookDTO = answerCheckMapper.mapJsonToFreeSessionForBookDTO(finalCheck);
+
+        return freeSessionForBookDTO != null &&
+                freeSessionForBookDTO.isSuccess() &&
+                freeSessionForBookDTO.getData() != null &&
+                freeSessionForBookDTO.getData()
+                        .stream()
+                        .anyMatch(dataInfo -> dataInfo.getDateTime().equals(appointment.getDatetime()));
+
+
+//        return (appointment.getDatetime() != null
+//        && appointment.getStaffId() != null
+//        && appointment.getServicesInformation() != null
+//        && serviceInformation.getServiceId() != null);
+    }
+
 
     /**
      * Отдаёт лист дто со всей базовой инфой по услугам - айди и название, без параметров, вообще все

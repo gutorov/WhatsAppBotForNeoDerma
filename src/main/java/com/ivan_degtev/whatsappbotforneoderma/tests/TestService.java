@@ -1,27 +1,28 @@
 package com.ivan_degtev.whatsappbotforneoderma.tests;
 
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
+
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
+
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
+
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 
@@ -35,7 +36,7 @@ public class TestService {
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
     private final AvailableSessionMapper availableSessionMapper;
-
+    private final AnswerCheckMapper answerCheckMapper;
     private final AppointmentsRepository appointmentsRepository;
     private final ServiceInformationRepository serviceInformationRepository;
     private final UserRepository userRepository;
@@ -46,6 +47,7 @@ public class TestService {
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
             AvailableSessionMapper availableSessionMapper,
+            AnswerCheckMapper answerCheckMapper,
             AppointmentsRepository appointmentsRepository,
             ServiceInformationRepository serviceInformationRepository,
             UserRepository userRepository
@@ -55,6 +57,7 @@ public class TestService {
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
         this.availableSessionMapper = availableSessionMapper;
+        this.answerCheckMapper = answerCheckMapper;
         this.appointmentsRepository = appointmentsRepository;
         this.serviceInformationRepository = serviceInformationRepository;
         this.userRepository = userRepository;
@@ -86,6 +89,7 @@ public class TestService {
                         serviceMapper,
                         employeeMapper,
                         availableSessionMapper,
+                        answerCheckMapper,
                         serviceInformationRepository,
                         appointmentsRepository,
                         userRepository,
