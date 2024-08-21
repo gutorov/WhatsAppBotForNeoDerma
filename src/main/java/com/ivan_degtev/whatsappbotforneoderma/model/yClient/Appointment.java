@@ -11,6 +11,7 @@ import lombok.ToString;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @Entity
@@ -26,7 +27,7 @@ public class Appointment {
     private Long id;
 
     @JsonProperty("services_information")
-    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.LAZY)
+    @OneToMany(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
     @JoinColumn(name = "appointment_id")
     @JsonIgnore
     private List<ServiceInformation> servicesInformation;
@@ -34,7 +35,9 @@ public class Appointment {
     @JsonProperty("staff_id")
     private String staffId;
 
-    private LocalDateTime datetime;
+    @JsonProperty("datetime")
+    private OffsetDateTime datetime;
+//    private LocalDateTime datetime;
 
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
     private User user;

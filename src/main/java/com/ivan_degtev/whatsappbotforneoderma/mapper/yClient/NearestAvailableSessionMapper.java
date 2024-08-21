@@ -7,9 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -17,13 +14,30 @@ import java.util.stream.StreamSupport;
 @Service
 @Slf4j
 @AllArgsConstructor
-public class AvailableSessionMapper {
+public class NearestAvailableSessionMapper {
     private final ObjectMapper objectMapper;
 
-    public List<AvailableSessionDTO> mapJsonToAvailableSessionList(String json) {
+    public List<AvailableSessionDTO> mapJsonToNearestAvailableSessionList(String json) {
         try {
             JsonNode rootNode = objectMapper.readTree(json);
-            JsonNode servicesNode = rootNode.path("data").path("seances");
+//            JsonNode servicesNode = rootNode.path("data").path("seances");
+//            JsonNode servicesNode = rootNode.path("data");
+            JsonNode seancesNode = rootNode.path("data").path("seances");
+
+            return StreamSupport.stream(seancesNode.spliterator(), false)
+                    .map(this::mapJsonNodeToAvailableSessionDTO)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to map JSON to AvailableSessionDTO list", e);
+        }
+    }
+    public List<AvailableSessionDTO> mapJsonToAvailableSessionListForSpecificDate(String json) {
+        try {
+            JsonNode rootNode = objectMapper.readTree(json);
+//            JsonNode servicesNode = rootNode.path("data").path("seances");
+            JsonNode servicesNode = rootNode.path("data");
 
             return StreamSupport.stream(servicesNode.spliterator(), false)
                     .map(this::mapJsonNodeToAvailableSessionDTO)
@@ -40,6 +54,8 @@ public class AvailableSessionMapper {
         availableSessionDTO.setTime(node.path("time").asText());
         availableSessionDTO.setSeanceLength(node.path("seance_length").asInt());
         availableSessionDTO.setDateTime(node.path("datetime").asText());
+        log.info("Замапил 1 сущность свободного времени для записи на опред. дату к сотруднику {}",
+                availableSessionDTO.toString());
         return availableSessionDTO;
     }
 }

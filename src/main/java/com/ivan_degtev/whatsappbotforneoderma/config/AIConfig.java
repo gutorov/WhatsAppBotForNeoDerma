@@ -3,13 +3,12 @@ package com.ivan_degtev.whatsappbotforneoderma.config;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.NearestAvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
-import com.ivan_degtev.whatsappbotforneoderma.service.YClientService;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
@@ -35,7 +34,7 @@ public class AIConfig {
 
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
-    private final AvailableSessionMapper availableSessionMapper;
+    private final NearestAvailableSessionMapper nearestAvailableSessionMapper;
     private final AnswerCheckMapper answerCheckMapper;
     private final AppointmentsRepository appointmentsRepository;
     private final ServiceInformationRepository serviceInformationRepository;
@@ -46,7 +45,7 @@ public class AIConfig {
             YClientServiceImpl yClientService,
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
-            AvailableSessionMapper availableSessionMapper,
+            NearestAvailableSessionMapper nearestAvailableSessionMapper,
             AnswerCheckMapper answerCheckMapper,
             AppointmentsRepository appointmentsRepository,
             ServiceInformationRepository serviceInformationRepository,
@@ -55,7 +54,7 @@ public class AIConfig {
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
-        this.availableSessionMapper = availableSessionMapper;
+        this.nearestAvailableSessionMapper = nearestAvailableSessionMapper;
         this.answerCheckMapper = answerCheckMapper;
         this.appointmentsRepository = appointmentsRepository;
         this.serviceInformationRepository = serviceInformationRepository;
@@ -110,7 +109,7 @@ public class AIConfig {
                         yClientService,
                         serviceMapper,
                         employeeMapper,
-                        availableSessionMapper,
+                        nearestAvailableSessionMapper,
                         answerCheckMapper,
                         serviceInformationRepository,
                         appointmentsRepository,

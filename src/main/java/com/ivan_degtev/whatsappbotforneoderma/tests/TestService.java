@@ -1,31 +1,14 @@
 package com.ivan_degtev.whatsappbotforneoderma.tests;
 
-import com.ivan_degtev.whatsappbotforneoderma.config.AIConfig;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
-
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
-import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
-import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.UserService;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.openai.OpenAiChatModelName;
-import dev.langchain4j.service.AiServices;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Scanner;
 
 @Service

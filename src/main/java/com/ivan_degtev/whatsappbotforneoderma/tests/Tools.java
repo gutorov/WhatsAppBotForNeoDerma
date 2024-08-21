@@ -9,7 +9,7 @@ import com.ivan_degtev.whatsappbotforneoderma.exception.NoParameterException;
 import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
 
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.NearestAvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 
@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,7 +41,7 @@ public class Tools {
     private final YClientServiceImpl yClientService;
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
-    private final AvailableSessionMapper availableSessionMapper;
+    private final NearestAvailableSessionMapper nearestAvailableSessionMapper;
     private final AnswerCheckMapper answerCheckMapper;
 
     private final WebClient webClient = WebClient.builder().build();
@@ -60,7 +60,7 @@ public class Tools {
             YClientServiceImpl yClientService,
             ServiceMapper serviceMapper,
             EmployeeMapper employeeMapper,
-            AvailableSessionMapper availableSessionMapper,
+            NearestAvailableSessionMapper nearestAvailableSessionMapper,
             AnswerCheckMapper answerCheckMapper,
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
@@ -74,7 +74,7 @@ public class Tools {
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
-        this.availableSessionMapper = availableSessionMapper;
+        this.nearestAvailableSessionMapper = nearestAvailableSessionMapper;
         this.answerCheckMapper = answerCheckMapper;
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
@@ -210,7 +210,7 @@ public class Tools {
                 listWithServiceIds)
                 .block();
         List<AvailableSessionDTO> availableSessionDTOS =
-                availableSessionMapper.mapJsonToAvailableSessionList(response);
+                nearestAvailableSessionMapper.mapJsonToNearestAvailableSessionList(response);
         log.info("Получил из мапера лист с доступными сеансами для брони {}",
                 availableSessionDTOS.stream()
                         .map(Object::toString)
@@ -235,7 +235,8 @@ public class Tools {
                 Long.valueOf(staffId),
                 List.of(serviceId))
                 .block();
-        List<AvailableSessionDTO> availableSessionDTOS = availableSessionMapper.mapJsonToAvailableSessionList(response);
+        List<AvailableSessionDTO> availableSessionDTOS =
+                nearestAvailableSessionMapper.mapJsonToAvailableSessionListForSpecificDate(response);
         log.info("Получил из мапера лист с доступными сеансами для брони строго на заданную дату {}",
                 availableSessionDTOS.stream()
                         .map(Object::toString)
@@ -256,14 +257,9 @@ public class Tools {
             List<AvailableSessionDTO> availableSessionDTOS,
             String currentChatId
     ) {
-        if (dateTime != null &&
-                !dateTime.isEmpty() &&
-                availableSessionDTOS
-                        .stream()
-                        .anyMatch(dto -> dateTime.equals(dto.getDateTime()))
-        ) {
+        if (dateTime != null) {
             Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
-            currentAppointments.setDatetime(LocalDateTime.parse(dateTime));
+            currentAppointments.setDatetime(OffsetDateTime.parse(dateTime));
             appointmentsRepository.save(currentAppointments);
             log.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}",
                     currentAppointments.toString());
@@ -276,12 +272,11 @@ public class Tools {
     }
     @Tool("""
             Последний инструмент в цепочки взаимодействий с клиентом. Клиент выбрал и подтвердил услугу, сотрудника и дату
-            со временем, на которые он записывается. Эти данные были обозначены и также сохранены во внутренние
-            сущности
-            Здесь происходит финальная проверка - если все успешно - с клиентом можно попрощаться и сообщий об успехе
-            записи, если есть проблемы - значит какая-то информация не была сохранена и ее нужно уточнить.
+            со временем, на которые он записывается. Эти данные были обозначены и также сохранены во внутренние сущности.
+            Здесь происходит финальная проверка - если все успешно - с клиентом можно попрощаться и сообщить об успехе
+            записи, выведя данные о его сеансе.
+            Если есть проблемы - значит какая-то информация не была сохранена и ее нужно уточнить.
             Передай сюда chatId клиента {{currentChatId}}
-
             """)
     public boolean finalPartDialog(
 //            Appointment appointment,
