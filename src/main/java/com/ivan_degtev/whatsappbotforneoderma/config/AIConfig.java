@@ -52,7 +52,6 @@ public class AIConfig {
     public ChatLanguageModel chatLanguageModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openAiToken)
-//                .apiKey("demo")
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
                 .responseFormat("json_object")
                 .logRequests(true)
@@ -60,12 +59,4 @@ public class AIConfig {
                 .build();
     }
 
-//    @Bean
-//    public AssistantTest assistantTest() {
-//        return AiServices.builder(AssistantTest.class)
-//                .chatLanguageModel(chatLanguageModel())
-//                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
-//                .tools(new Tools(serviceMapper))
-//                .build();
-//    }
 }

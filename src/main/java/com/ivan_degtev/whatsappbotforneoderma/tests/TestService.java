@@ -74,7 +74,6 @@ public class TestService {
         //тестовая модель
         ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
                 .apiKey(openAiToken)
-//                .apiKey("demo")
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
                 .logRequests(true)
                 .logRequests(true)
@@ -106,7 +105,7 @@ public class TestService {
         while (true) {
             String question = scanner.nextLine();
 
-            String answer = assistant.chat(question);
+            String answer = assistant.chat(question, currentUser);
             log.info("Ответ от тест чата {}", answer);
         }
     }
