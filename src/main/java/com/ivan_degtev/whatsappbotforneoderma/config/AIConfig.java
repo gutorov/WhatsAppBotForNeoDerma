@@ -2,25 +2,64 @@ package com.ivan_degtev.whatsappbotforneoderma.config;
 
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AvailableSessionMapper;
+import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
+import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
+import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
+import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
+import com.ivan_degtev.whatsappbotforneoderma.service.YClientService;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
+import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.service.AiServices;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Slf4j
 public class AIConfig {
 
     @Value("${open.ai.token}")
     private String openAiToken;
-    private final ServiceMapper serviceMapper;
 
-    public AIConfig(ServiceMapper serviceMapper) {
+
+    private final YClientServiceImpl yClientService;
+
+    private final ServiceMapper serviceMapper;
+    private final EmployeeMapper employeeMapper;
+    private final AvailableSessionMapper availableSessionMapper;
+    private final AnswerCheckMapper answerCheckMapper;
+    private final AppointmentsRepository appointmentsRepository;
+    private final ServiceInformationRepository serviceInformationRepository;
+    private final UserRepository userRepository;
+
+
+    public AIConfig(
+            YClientServiceImpl yClientService,
+            ServiceMapper serviceMapper,
+            EmployeeMapper employeeMapper,
+            AvailableSessionMapper availableSessionMapper,
+            AnswerCheckMapper answerCheckMapper,
+            AppointmentsRepository appointmentsRepository,
+            ServiceInformationRepository serviceInformationRepository,
+            UserRepository userRepository
+            ) {
+        this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
+        this.employeeMapper = employeeMapper;
+        this.availableSessionMapper = availableSessionMapper;
+        this.answerCheckMapper = answerCheckMapper;
+        this.appointmentsRepository = appointmentsRepository;
+        this.serviceInformationRepository = serviceInformationRepository;
+        this.userRepository = userRepository;
     }
 
     @Bean
@@ -53,10 +92,54 @@ public class AIConfig {
         return OpenAiChatModel.builder()
                 .apiKey(openAiToken)
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
-                .responseFormat("json_object")
+//                .responseFormat("json_object")
                 .logRequests(true)
                 .logRequests(true)
                 .build();
     }
 
+
+
+    //тест
+    @Bean
+    public AssistantTest assistantTest() {
+        return AiServices.builder(AssistantTest.class)
+                .chatLanguageModel(chatLanguageModel())
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .tools(new Tools(
+                        yClientService,
+                        serviceMapper,
+                        employeeMapper,
+                        availableSessionMapper,
+                        answerCheckMapper,
+                        serviceInformationRepository,
+                        appointmentsRepository,
+                        userRepository
+                ))
+                .build();
+    }
+
+//    @Bean
+//    public Tools tools(
+//            YClientServiceImpl yClientService,
+//            ServiceMapper serviceMapper,
+//            EmployeeMapper employeeMapper,
+//            AvailableSessionMapper availableSessionMapper,
+//            AnswerCheckMapper answerCheckMapper,
+//            ServiceInformationRepository serviceInformationRepository,
+//            AppointmentsRepository appointmentsRepository,
+//            UserRepository userRepository
+//    ) {
+//        log.info("Создали бин тулов из нового класса тулов");
+//        return new Tools(
+//                yClientService,
+//                serviceMapper,
+//                employeeMapper,
+//                availableSessionMapper,
+//                answerCheckMapper,
+//                serviceInformationRepository,
+//                appointmentsRepository,
+//                userRepository
+//        );
+//    }
 }

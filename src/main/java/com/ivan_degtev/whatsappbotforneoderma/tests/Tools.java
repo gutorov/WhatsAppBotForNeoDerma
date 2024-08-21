@@ -25,6 +25,7 @@ import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import dev.langchain4j.agent.tool.Tool;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -34,7 +35,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Component
 public class Tools {
+
     private final YClientServiceImpl yClientService;
     private final ServiceMapper serviceMapper;
     private final EmployeeMapper employeeMapper;
@@ -45,9 +48,9 @@ public class Tools {
     private final ServiceInformationRepository serviceInformationRepository;
     private final AppointmentsRepository appointmentsRepository;
     private final UserRepository userRepository;
-    private User user;
-    private Appointment appointment;
-    private ServiceInformation serviceInformation;
+//    private User user;
+//    private Appointment appointment;
+//    private ServiceInformation serviceInformation;
 
     private static final String yclientToken = System.getenv("yclient.token");
     private static final Long companyId = 316398L;
@@ -61,11 +64,13 @@ public class Tools {
             AnswerCheckMapper answerCheckMapper,
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
-            UserRepository userRepository,
-            User user,
-            Appointment appointment,
-            ServiceInformation serviceInformation
+            UserRepository userRepository
+//            User user,
+//            Appointment appointment,
+//            ServiceInformation serviceInformation
     ) {
+        log.info("Создаем Tools с инжектированными зависимостями");
+
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
@@ -74,9 +79,9 @@ public class Tools {
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
-        this.user = user;
-        this.appointment = appointment;
-        this.serviceInformation = serviceInformation;
+//        this.user = user;
+//        this.appointment = appointment;
+//        this.serviceInformation = serviceInformation;
     }
 
     @Tool("""
@@ -104,22 +109,33 @@ public class Tools {
     @Tool("""
     Если клиент решил на какую услугу он хочет - найди услугу по ее названию {{serviceName}}.
     Например, если пользователь говорит "запишите меня на дизайн стрижку", найди и запомни ID услуги "дизайнерская стрижка".
+    Передай также и chatId клиента {{currentChatId}}
     """)
     @Transactional
     //и запиши её serviceId в объект
-    public String getIdService(String serviceName) {
+    public String getIdService(
+            String serviceName,
+            String currentChatId
+    ) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
 
         for (ServiceInformationDTO service : serviceInformationList) {
             if (service.getTitle().toLowerCase().contains(serviceName.toLowerCase())) {
                 String serviceId = service.getServiceId();
 
-                serviceInformation.setServiceId(serviceId);
-                appointment.setServicesInformation(List.of(serviceInformation));
-                user.setAppointments(List.of(appointment));
-                userRepository.save(user);
+                User currentUser = userRepository.findUserByChatId(currentChatId).
+                        orElseThrow(() -> new NotFoundException("Юзер с чат-id " + currentChatId + " не найден!"));
+                Appointment currentAppointments = new Appointment();
+                ServiceInformation currentServiceInformation = new ServiceInformation(serviceId);
+                currentAppointments.setServicesInformation(List.of(currentServiceInformation));
+                currentUser.setAppointments(List.of(currentAppointments));
+
+//                serviceInformation.setServiceId(serviceId);
+//                appointment.setServicesInformation(List.of(serviceInformation));
+//                user.setAppointments(List.of(appointment));
+                userRepository.save(currentUser);
                 log.info("Нашёл совпадение по имени услуги и записал в сущность и сохранил в юзера {}",
-                        serviceInformation.toString());
+                        currentServiceInformation.toString());
                 return serviceId;
             }
         }
@@ -155,12 +171,18 @@ public class Tools {
             Если пользователь точно выбрал и подтвердил к какому сотруднику он намерен пойти.
             Пойми из контекста твёрдость решения пользователя. Можно задать уточняющий вопрос.
             Передай в метод id этого сотрудника в поле {{staffId}}
+            Передай также и chatId клиента {{currentChatId}}
             """)
-    public void confirmationOfEmployeeSelection(String staffId) {
+    public void confirmationOfEmployeeSelection(
+            String staffId,
+            String currentChatId
+    ) {
         if (staffId != null && !staffId.isEmpty()) {
-            appointment.setStaffId(staffId);
-            appointmentsRepository.save(appointment);
-            log.info("сохранил в БД обновленную запись с id сотрудника {}", appointment.toString());
+            //  ПЕРЕПИСАТЬ С ИСПОЛЬЗОВАНИЕМ АЙДИ СЕАНСА, ПРИДУМАТЬ КАК СОХРАНЯТЬ СОСТОЯНИЕ ТЕКУЩЕЙ СЕССИИ
+            Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
+            currentAppointments.setStaffId(staffId);
+            appointmentsRepository.save(currentAppointments);
+            log.info("сохранил в БД обновленную запись с id сотрудника {}", currentAppointments.toString());
         } else {
             log.warn("Сотрудник с таким id не найден: {}", staffId);
             throw new NotFoundException("Сотрудник с таким id не найден");
@@ -225,12 +247,14 @@ public class Tools {
             Ранее он выбрал сотрудника и услугу. Дата и время, указанные клиентом совпадают с информацией о доступных
             датах {{availableSessionDTOS}}, которую ты получал ранее.
             Пойми из контекста твёрдость решения пользователя.
-            Передай в метод эту дату и время {{dateTime}} в формате iso8601
-            и данные о доступных датах {{availableSessionDTOS}}
+            Передай в метод эту дату и время {{dateTime}} в формате iso8601, данные о доступных датах {{availableSessionDTOS}}
+            и chatId клиента {{currentChatId}}
+
             """)
     public void confirmationOfDateSelection(
             String dateTime,
-            List<AvailableSessionDTO> availableSessionDTOS
+            List<AvailableSessionDTO> availableSessionDTOS,
+            String currentChatId
     ) {
         if (dateTime != null &&
                 !dateTime.isEmpty() &&
@@ -238,9 +262,11 @@ public class Tools {
                         .stream()
                         .anyMatch(dto -> dateTime.equals(dto.getDateTime()))
         ) {
-            appointment.setDatetime(LocalDateTime.parse(dateTime));
-            appointmentsRepository.save(appointment);
-            log.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}", appointment.toString());
+            Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
+            currentAppointments.setDatetime(LocalDateTime.parse(dateTime));
+            appointmentsRepository.save(currentAppointments);
+            log.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}",
+                    currentAppointments.toString());
         } else {
             log.warn("Указанная клиентом дата либо пустая, либо отсутствует в списке доступных дат для бронирования: {}",
                     dateTime);
@@ -251,33 +277,39 @@ public class Tools {
     @Tool("""
             Последний инструмент в цепочки взаимодействий с клиентом. Клиент выбрал и подтвердил услугу, сотрудника и дату
             со временем, на которые он записывается. Эти данные были обозначены и также сохранены во внутренние
-            сущности {{appointment}} и {{serviceInformation}}.
-            Здесь происходит финальная проверка - если все успешно - с клиентом можно попрощаться, если есть проблемы -
-            значит какая-то информация не была сохранена и ее нужно уточнить.
+            сущности
+            Здесь происходит финальная проверка - если все успешно - с клиентом можно попрощаться и сообщий об успехе
+            записи, если есть проблемы - значит какая-то информация не была сохранена и ее нужно уточнить.
+            Передай сюда chatId клиента {{currentChatId}}
+
             """)
     public boolean finalPartDialog(
 //            Appointment appointment,
 //            ServiceInformation serviceInformation
+            String currentChatId
     ) {
-
-            if (appointment.getDatetime() == null) {
+        Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
+        //ПЕРЕПИСАТЬ С АЙДИ ВНУТРЕННЕГО СОСТОЯНИЯ!
+        ServiceInformation currentServiceInformation = serviceInformationRepository
+                .findAllByAppointment(currentAppointments).get(0);
+        if (currentAppointments.getDatetime() == null) {
                 throw new NoParameterException("В сущности appointment не сохранена дата и время записи на приём");
             }
-            if (appointment.getStaffId() == null) {
+            if (currentAppointments.getStaffId() == null) {
                 throw new NoParameterException("В сущности appointment не сохранен id сотрудника к которому нужно " +
                         "записаться на приём");
             }
-            if (appointment.getServicesInformation() == null) {
+            if (currentAppointments.getServicesInformation() == null) {
                 throw new NoParameterException("В сущности appointment нет связи с сущностью ServiceInformation," +
                         "которая хранит данные о забронированных услугах");
             }
-            if (serviceInformation.getServiceId() == null) {
+            if (currentServiceInformation.getServiceId() == null) {
                 throw new NoParameterException("В сущности serviceInformation не сохранен id услуги для записи на приём");
             }
             String finalCheck =  yClientService.getListSessionsAvailableForBooking(
-                    String.valueOf(appointment.getDatetime()),
-                    Long.valueOf(appointment.getStaffId()),
-                    List.of(serviceInformation.getServiceId())
+                    String.valueOf(currentAppointments.getDatetime()),
+                    Long.valueOf(currentAppointments.getStaffId()),
+                    List.of(currentServiceInformation.getServiceId())
             ).block();
         FreeSessionForBookDTO freeSessionForBookDTO = answerCheckMapper.mapJsonToFreeSessionForBookDTO(finalCheck);
 
@@ -286,7 +318,8 @@ public class Tools {
                 freeSessionForBookDTO.getData() != null &&
                 freeSessionForBookDTO.getData()
                         .stream()
-                        .anyMatch(dataInfo -> dataInfo.getDateTime().equals(appointment.getDatetime()));
+                        .anyMatch(dataInfo -> dataInfo.getDateTime()
+                                .equals(currentAppointments.getDatetime()));
 
 
 //        return (appointment.getDatetime() != null

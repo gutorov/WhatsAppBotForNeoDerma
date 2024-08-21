@@ -17,6 +17,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @ToString(exclude = { "appointment" } )
 public class ServiceInformation {
 
+    public ServiceInformation(String serviceId) {
+        this.serviceId = serviceId;
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
