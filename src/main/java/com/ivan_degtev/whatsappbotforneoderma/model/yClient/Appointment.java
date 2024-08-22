@@ -37,7 +37,20 @@ public class Appointment {
 
     @JsonProperty("datetime")
     private OffsetDateTime datetime;
-//    private LocalDateTime datetime;
+
+    /**
+     * Поле показыывает полностью заполненный appointment  и готовый для отправки через post-запрос
+     * Проствавляется в финальном Tool, чекается в сервисе langchain4j
+     */
+    @JsonProperty("completely_filled")
+    private Boolean completelyFilled;
+
+    /**
+     * Поле нужно для сохранения состояния текущей сессии по актуальной записи для связывания
+     * с текущим актуальным appointment, необходима именно в Tools LLM
+     */
+    @JsonProperty("unique_id_for_appointment")
+    private String uniqueIdForAppointment;
 
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
     private User user;

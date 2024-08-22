@@ -52,9 +52,9 @@ public class Tools {
 //    private Appointment appointment;
 //    private ServiceInformation serviceInformation;
 
-    private static final String yclientToken = System.getenv("yclient.token");
-    private static final Long companyId = 316398L;
-    private  static List<ServiceInformationDTO> servicesInformationDTOList;
+//    private static final String yclientToken = System.getenv("yclient.token");
+//    private static final Long companyId = 316398L;
+//    private  static List<ServiceInformationDTO> servicesInformationDTOList;
 
     public Tools(
             YClientServiceImpl yClientService,
@@ -65,9 +65,6 @@ public class Tools {
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
             UserRepository userRepository
-//            User user,
-//            Appointment appointment,
-//            ServiceInformation serviceInformation
     ) {
         log.info("Создаем Tools с инжектированными зависимостями");
 
@@ -79,9 +76,6 @@ public class Tools {
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
-//        this.user = user;
-//        this.appointment = appointment;
-//        this.serviceInformation = serviceInformation;
     }
 
     @Tool("""
@@ -278,11 +272,7 @@ public class Tools {
             Если есть проблемы - значит какая-то информация не была сохранена и ее нужно уточнить.
             Передай сюда chatId клиента {{currentChatId}}
             """)
-    public boolean finalPartDialog(
-//            Appointment appointment,
-//            ServiceInformation serviceInformation
-            String currentChatId
-    ) {
+    public boolean finalPartDialog(String currentChatId) {
         Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
         //ПЕРЕПИСАТЬ С АЙДИ ВНУТРЕННЕГО СОСТОЯНИЯ!
         ServiceInformation currentServiceInformation = serviceInformationRepository
@@ -308,19 +298,20 @@ public class Tools {
             ).block();
         FreeSessionForBookDTO freeSessionForBookDTO = answerCheckMapper.mapJsonToFreeSessionForBookDTO(finalCheck);
 
-        return freeSessionForBookDTO != null &&
+        if (freeSessionForBookDTO != null &&
                 freeSessionForBookDTO.isSuccess() &&
                 freeSessionForBookDTO.getData() != null &&
                 freeSessionForBookDTO.getData()
                         .stream()
                         .anyMatch(dataInfo -> dataInfo.getDateTime()
-                                .equals(currentAppointments.getDatetime()));
-
-
-//        return (appointment.getDatetime() != null
-//        && appointment.getStaffId() != null
-//        && appointment.getServicesInformation() != null
-//        && serviceInformation.getServiceId() != null);
+                                .equals(currentAppointments.getDatetime()))) {
+            currentAppointments.setCompletelyFilled(true);
+            // САМЫЙ ВАЖНЫЙ ФЛАГ - СЧИТЫВАЕТСЯ В ОСНОВНОМ КОДЕ ПРИЛОЖЕНИЯ
+            // И ПО НЕМУ ПОНИМАЕМ, ЧТО ЗАПИСЬ СОБРАНА И МОЖНО ОТПРАВЛЯТЬ POST-ЗАПРОС НА YACLIENT
+            return true;
+        } else {
+            return false;
+        }
     }
 
 

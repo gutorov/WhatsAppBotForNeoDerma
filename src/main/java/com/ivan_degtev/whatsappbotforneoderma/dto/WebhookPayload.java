@@ -1,6 +1,7 @@
 package com.ivan_degtev.whatsappbotforneoderma.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.ivan_degtev.whatsappbotforneoderma.model.enums.Direction;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -27,7 +28,7 @@ public class WebhookPayload {
     @ToString
     public static class NewMessage {
         private MessageDetails message;
-        private String direction;
+        private Direction direction;
         @JsonProperty("sender_id")
         private String senderId;
         @JsonProperty("chat_id")

@@ -102,33 +102,6 @@ public class TestService {
 
         userRepository.save(currentUser);
 
-        //тестовая модель
-//        ChatLanguageModel chatLanguageModel = OpenAiChatModel.builder()
-//                .apiKey(openAiToken)
-//                .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
-//                .logRequests(true)
-//                .logRequests(true)
-//                .build();
-//
-//        //тестовый клиент ассистента для работы с модлеью
-//        AssistantTest assistant = AiServices.builder(AssistantTest.class)
-//                .chatLanguageModel(chatLanguageModel)
-//                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
-//                .tools(new Tools(
-//                        yClientService,
-//                        serviceMapper,
-//                        employeeMapper,
-//                        availableSessionMapper,
-//                        answerCheckMapper,
-//                        serviceInformationRepository,
-//                        appointmentsRepository,
-//                        userRepository,
-//                        currentUser,
-//                        appointment,
-//                        serviceInformation
-//                ))
-//                .build();
-
 
         Scanner scanner = new Scanner(System.in);
 

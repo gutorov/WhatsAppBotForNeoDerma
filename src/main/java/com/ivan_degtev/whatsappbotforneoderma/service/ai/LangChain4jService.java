@@ -1,190 +1,99 @@
 package com.ivan_degtev.whatsappbotforneoderma.service.ai;
 
-import com.ivan_degtev.whatsappbotforneoderma.component.DailyScheduler;
-import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
-import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
-import com.ivan_degtev.whatsappbotforneoderma.controller.YClientController;
-import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
-import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableStaffForBookingService;
-import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.DataForWriteDTO;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
+import com.ivan_degtev.whatsappbotforneoderma.controller.WhatsAppController;
+import com.ivan_degtev.whatsappbotforneoderma.controller.WhatsAppSendController;
+import com.ivan_degtev.whatsappbotforneoderma.model.Message;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
-import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
-import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
-import lombok.AllArgsConstructor;
+import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushService;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.ChatpushServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.UserService;
+import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.stereotype.Service;
+import org.springframework.web.util.UrlPathHelper;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Scanner;
 
-@org.springframework.stereotype.Service
+@Service
 @Slf4j
-@AllArgsConstructor
 @DependsOn("dailyScheduler")
 public class LangChain4jService {
-    private Assistant assistant;
-    private AIAnalyzer aiAnalyzer;
-    private DailyScheduler dailyScheduler;
-    private final YClientController yClientController;
-    private final EmployeeMapper employeeMapper;
+//    private Assistant assistant;
+//    private AIAnalyzer aiAnalyzer;
+//    private DailyScheduler dailyScheduler;
+//    private final YClientController yClientController;
+//    private final EmployeeMapper employeeMapper;
+//    private final ServiceInformationRepository serviceInformationRepository;
+//    private final AppointmentsRepository appointmentsRepository;
+
+    @Value("${open.ai.token}")
+    private String openAiToken;
+    private final AssistantTest assistantTest;
     private final UserRepository userRepository;
-    private final ServiceInformationRepository serviceInformationRepository;
-    private final AppointmentsRepository appointmentsRepository;
+//    private final ChatPushService chatPushService;
+    private final WhatsAppSendController whatsAppSendController;
 
-
-
-
-
-
-
-
-
-
-//    public void testLLM() {
-//        log.info("testLLM tarted - тестим приход из вотсапа по хуку ");
-//
-//        User user = new User();
-//        user.setChatId("111");
-//        user.setSenderPhoneNumber("79951489346");
-//        Appointment appointment = new Appointment();
-//        ServiceInformation serviceInformation = new ServiceInformation();
-//        appointment.setServicesInformation(List.of(serviceInformation));
-//        user.setAppointments(List.of(appointment));
-//        userRepository.save(user);
-//
-//        DataForWriteDTO dataForWriteDTO = new DataForWriteDTO();
-//
-//        while(true) {
-//            Scanner scanner = new Scanner(System.in);
-//            String question = scanner.nextLine();
-//
-//            if (question.equals("exit")) {
-//                scanner.close();
-//            }
-//            langChain4JMainModule(
-//                    question,
-//                    user,
-//                    appointment,
-//                    dataForWriteDTO
-//            );
-//        }
-//    }
-//    public void langChain4JMainModule(
-//            String question,
-//            User currentUser,
-//            Appointment appointment,
-//            DataForWriteDTO dataForWriteDTO
-//    ) {
-//        log.info("LangChain4jMainModule started");
-//
-//        String availableDatesForBookingServices;
-//
-//        String analyzedAnswer = aiAnalyzer.chat(question);
-//        log.info("Анализатор определит тип вопроса, как: " + analyzedAnswer);
-//
-//        switch (analyzedAnswer) {
-//            case "1" -> {
-//
-//
-//                String assistantAnswer = assistant.greeting(
-//                        question
-//                );
-//                log.info("Ответ: " + assistantAnswer);
-//
-//
-//            }
-//            case "2" -> {
-//
-////                String name = assistant.writeUserName(
-////                        dataForWriteDTO,
-////                        question
-////                );
-//
-//
-//                List<ServiceInformationDTO> serviceInformationList = dailyScheduler.getServiceInformationDTOList();
-//                String assistantAnswer = assistant.onlyServiceDialog(
-//                        serviceInformationList,
-//                        question
-//                );
-//                log.info("Ответ: " + assistantAnswer);
-//
-//
-//            }
-//            case "3" -> {
-//                List<ServiceInformation> serviceInformationList = serviceInformationRepository.findAll();
-//                String encodedServiceId = assistant.searchFreeDatesByNameService(
-//                        serviceInformationList,
-//                        question
-//                ); //по идее отдаёт только 1 строку - айди услуги - мапим далее в лист
-//                List<Long> serviceIdsFromUtilAIMethod = List.of(Long.valueOf(encodedServiceId));
-//                log.info("утилитный метод получил айди предполагаемой услуги и ее класс - первый елемент листа - {}",
-//                        serviceInformationList.get(0).toString());
-//
-//                List<ServiceInformation> actualServicesForUser
-//                        = serviceInformationRepository.findByServiceIdIn(serviceIdsFromUtilAIMethod);
-//                appointment.setServicesInformation(actualServicesForUser);
-//
-//                currentUser.setAppointments(List.of(appointment));
-//
-//                //нужно преобразовать лист лонгов-внешних айди услуг в лист строк, для поиска по внешнему апи
-//                // актуальных свободных дат
-//                List<String> serviceIdsStringList = serviceIdsFromUtilAIMethod
-//                        .stream()
-//                        .map(String::valueOf)
-//                        .toList();
-//
-//                availableDatesForBookingServices =
-//                        yClientController.getListDatesAvailableForBooking(serviceIdsStringList).block();
-//                log.info("Получил моно строку json от запроса к яклиенту {}", availableDatesForBookingServices);
-//
-//                if (availableDatesForBookingServices == null || availableDatesForBookingServices.isEmpty()) {
-//                    throw new IllegalArgumentException("responseWithFreeDates is missing or empty");
-//                }
-//                String assistantAnswer = assistant.onlyService(
-//                        availableDatesForBookingServices,
-//                        question
-//                );
-//                log.info("Ответ: " + assistantAnswer);
-//
-//
-//            }
-//            case "4" -> {
-//
-//                String specifiedDate = assistant.addingDateForAppointment(
-//                        question
-//                );
-//                appointment.setDatetime(LocalDateTime.parse(specifiedDate));
-//                log.info("дата из запроса юзера конвертировалась в поле в  appointment {}", appointment);
-//
-//                List<String> serviceIds = appointment.getServicesInformation()
-//                        .stream()
-//                        .map(ServiceInformation::getServiceId)
-//                        .toList();
-//
-//                // получаем  от внешнего апи - данные о сотрудниках, которые могут оказать данную услугу в данную дату
-//                // без времени - ответ будет неполным и почти бесполезным
-//                String json = yClientController.getListEmployeesAvailableForBooking(
-//                        serviceIds,
-//                        appointment.getDatetime()
-//                ).block();
-//                List<AvailableStaffForBookingService> freeEmployeesForThisService =
-//                        employeeMapper.mapJsonToAvailableStaffForBookingService(json);
-//                String assistantAnswer = assistant.onlyServiceAndDate(
-//                        freeEmployeesForThisService,
-//                        question
-//                );
-//
-//                log.info("Ответ: {}", assistantAnswer);
-//
-//
-//            }
-//            case "0" -> log.info("Миша, давай по новой");
-//        }
-//    }
+    public LangChain4jService(
+            @Value("${open.ai.token}") String openAiToken,
+            AssistantTest assistantTest,
+            UserRepository userRepository,
+//            @Qualifier("chatPushSenderServiceImpl") ChatPushService chatPushService
+            WhatsAppSendController whatsAppSendController
+    ) {
+        this.openAiToken = openAiToken;
+        this.assistantTest = assistantTest;
+        this.userRepository = userRepository;
+//        this.chatPushService = chatPushService;
+        this.whatsAppSendController = whatsAppSendController;
     }
+
+
+    public void mainMethodByWorkWithLLM(
+            User currentUser,
+            Message currentMessage
+    ) {
+        String currentChatId = currentUser.getChatId();
+        String textMessage = currentMessage.getText();
+        String currentUserPhone = currentUser.getSenderPhoneNumber();
+
+        String LLMAnswer = assistantTest.chat(textMessage, currentChatId);
+        log.info("LLM answer: {}", LLMAnswer);
+
+
+        var answerFromSendMessage = whatsAppSendController.sendMessage(LLMAnswer, currentUserPhone);
+        log.info("Отправил сообщение из сервиса LangChain4j в чатпуш сервис - в сообщению юзеру, " +
+                "ответ от метода отправки {}", answerFromSendMessage);
+    }
+
+
+    /**
+     * Тестовый формат метода для быстрой проверки ЛЛМ через сканер.
+     * Подключить в DataInitializer(удобнее) или вызвать вручную из кода
+     */
+    public void testLLMLogicWithScanner() {
+        User currentUser = new User();
+        currentUser.setChatId("111");
+
+        userRepository.save(currentUser);
+
+
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            String question = scanner.nextLine();
+
+            if (question.equals("exit")) {
+                log.info("тестовый сканер закрыт!");
+                break;
+            }
+            String currentChatId = currentUser.getChatId();
+
+            String answer = assistantTest.chat(question, "111");
+            log.info("Ответ от тест чата {}", answer);
+        }
+    }
+}
 

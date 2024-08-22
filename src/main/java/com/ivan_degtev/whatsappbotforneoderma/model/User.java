@@ -38,6 +38,13 @@ public class User implements BaseEntity {
     @JsonProperty("sender_phone_number")
     private String senderPhoneNumber;
 
+    /**
+     * Поле нужно для сохранения состояния текущей сессии по актуальной записи для связывания
+     * с текущим актуальным appointment, необходима именно в Tools LLM
+     */
+    @JsonProperty("unique_id_for_appointment")
+    private String uniqueIdForAppointment;
+
     @OneToMany(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore

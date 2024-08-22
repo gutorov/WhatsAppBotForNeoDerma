@@ -18,7 +18,8 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("DataInitializer started");
-//        langChain4jService.testLLM();
-        testService.test11();
+
+        //Раскомментировать для теста ЛЛМ локально через сканнер
+//        langChain4jService.testLLMLogicWithScanner();
     }
 }

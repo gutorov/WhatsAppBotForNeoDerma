@@ -25,10 +25,14 @@ public class WhatsAppController {
 
     public WhatsAppController(
             ChatpushServiceImpl chatpushService,
-            MessageService messageService
+            MessageService messageService,
+            @Value("${ngrok.url}") String ngrokUrl,
+            @Value("${chatpush.api.key}") String chatpushApiKey
     ) {
         this.chatpushService = chatpushService;
         this.messageService = messageService;
+        this.ngrokUrl = ngrokUrl;
+        this.chatpushApiKey = chatpushApiKey;
     }
 
     /**
@@ -44,9 +48,8 @@ public class WhatsAppController {
     }
 
     /**
-     * На эту ручку будут приходить все входщие сообщения с вотсапа, переброшенные сюда через чатпуш -> ngrok
-     * @param headers
-     * @param payload
+     * На эту ручку будут приходить все входщие и исходящие сообщения с вотсапа, переброшенные сюда через чатпуш -> ngrok
+     * Нужно в дальнейшей логике корректно фильтровать и не обрабатывать через LLM исходящие сообшения
      */
     @PostMapping("/webhook")
     public void handleWebhook(
@@ -57,17 +60,17 @@ public class WhatsAppController {
         chatpushService.getMessageFromWebhook(headers, payload);
     }
 
-    @PostMapping("/send-message")
-    public Mono<SendingMessageResponse> sendMessage(
-            @RequestParam String text,
-            @RequestParam String phone
-    ) {
-        return chatpushService.sendMessage(text, phone)
-                .doOnSuccess(response -> {
-                    System.out.println("Message sent successfully: " + response.toString());
-                })
-                .doOnError(error -> System.err.println("Failed to send message: " + error.getMessage()));
-    }
+//    @PostMapping("/send-message")
+//    public Mono<SendingMessageResponse> sendMessage(
+//            @RequestParam String text,
+//            @RequestParam String phone
+//    ) {
+//        return chatpushService.sendMessage(text, phone)
+//                .doOnSuccess(response -> {
+//                    System.out.println("Message sent successfully: " + response.toString());
+//                })
+//                .doOnError(error -> System.err.println("Failed to send message: " + error.getMessage()));
+//    }
 
 
     /**
