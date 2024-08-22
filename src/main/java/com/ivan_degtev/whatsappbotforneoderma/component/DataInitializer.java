@@ -21,5 +21,6 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
         //Раскомментировать для теста ЛЛМ локально через сканнер
 //        langChain4jService.testLLMLogicWithScanner();
+//        langChain4jService.testSendMessage();
     }
 }

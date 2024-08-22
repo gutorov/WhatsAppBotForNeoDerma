@@ -8,12 +8,15 @@ import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.ai.LangChain4jService;
+import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Struct;
 import java.util.List;
+
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -24,13 +27,17 @@ public class UserService {
     private final UserMapper userMapper;
     private final MessageService messageService;
     private final LangChain4jService langChain4jService;
+    private final JsonLoggingService jsonLogging;
+    private final JsonLoggingService jsonLoggingService;
+
     /**
      * Основной метод по мапингу json вопросов-ответов с клиентов во внутренние сущности юзера и сообщения
      * При первичном обращении - юзер создается, если он уже есть в БД по уникальному чат-айди
      * - добавляются только новые сообщения
      */
+    @Transactional
     public void addingUserWhenThereIsNone(WebhookPayload webhookPayload) {
-        log.info("получил пейлоад из нового метода в сервисе {}", webhookPayload.toString());
+        jsonLogging.info("получил пейлоад из нового метода в сервисе {}", webhookPayload.toString());
 
         String currentChatId = webhookPayload.getPayload().getNewMessage().getChatId();
         Message currentMessage = new Message();
@@ -46,29 +53,23 @@ public class UserService {
 
         User currentUser = userRepository.findUserByChatId(currentChatId)
                         .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
-        /*
-          Вытащили уникальное значение, которое приходит из вотсапа для каждого сообщения - будем исопльзоваться,
-           как внутренний ключ для связи юзера и текущего Appointment
-         */
-        String currentUniqueIdForAppointment = webhookPayload.getPayload().getNewMessage().getMessage().getId();
-        User currentUser2 = addingUniqueIdForAppointmentIsNone(currentUser, currentUniqueIdForAppointment);
 
-        langChain4jService.mainMethodByWorkWithLLM(currentUser2, currentMessage);
+//        String currentUniqueIdForAppointment = webhookPayload.getPayload().getNewMessage().getMessage().getId();
+        addingUniqueIdForAppointmentIsNone(currentUser);
+
+        langChain4jService.mainMethodByWorkWithLLM(currentUser, currentMessage);
     }
 
-    private User addingUniqueIdForAppointmentIsNone(
-            User currentUser,
-            String currentUniqueIdForAppointment
-    ) {
+    private void addingUniqueIdForAppointmentIsNone(User currentUser) {
         if (currentUser.getUniqueIdForAppointment() == null) {
-            currentUser.setUniqueIdForAppointment(currentUniqueIdForAppointment);
+            currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
             userRepository.save(currentUser);
         } else if (currentUser.getAppointments().stream().allMatch(Appointment::getCompletelyFilled)) {
-            currentUser.setUniqueIdForAppointment(currentUniqueIdForAppointment);
+            currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
             userRepository.save(currentUser);
         }
-        log.info("Возвращаю из метода addingUniqueIdForAppointmentIsNone текущего юзера с изменениями {}", currentUser);
-        return currentUser;
+        jsonLogging.info("Возвращаю из метода addingUniqueIdForAppointmentIsNone текущего юзера с изменениями {}",
+                currentUser.toString());
     }
 
     /**

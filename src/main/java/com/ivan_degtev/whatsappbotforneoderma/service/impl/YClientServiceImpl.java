@@ -1,16 +1,15 @@
 package com.ivan_degtev.whatsappbotforneoderma.service.impl;
 
 import com.ivan_degtev.whatsappbotforneoderma.service.YClientService;
+import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -21,15 +20,20 @@ import java.util.List;
 public class YClientServiceImpl implements YClientService {
 
     private final WebClient webClient;
-    private final Long companyId = 316398L;
+    private final JsonLoggingService jsonLogging;
+    private final JsonLoggingService jsonLoggingService;
 
     @Value("${yclient.token}")
     private String yclientToken;
+    private final Long companyId = 316398L;
 
     public YClientServiceImpl(
-            WebClient.Builder webClientBuilder
-    ) {
+            WebClient.Builder webClientBuilder,
+            JsonLoggingService jsonLogging,
+            JsonLoggingService jsonLoggingService) {
         this.webClient = webClientBuilder.baseUrl("https://api.yclients.com/api/v1").build();
+        this.jsonLogging = jsonLogging;
+        this.jsonLoggingService = jsonLoggingService;
     }
 
 
@@ -55,8 +59,8 @@ public class YClientServiceImpl implements YClientService {
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
-                .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch dates: " + error.getMessage()));
+                .doOnSuccess(response -> jsonLoggingService.info("Response from Yclients: {}", response))
+                .doOnError(error -> jsonLogging.error("Failed to fetch dates: {}", error.getMessage()));
     }
 
 
@@ -92,8 +96,8 @@ public class YClientServiceImpl implements YClientService {
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
-                .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch services: " + error.getMessage()));
+                .doOnSuccess(response -> jsonLogging.info("Response from Yclients: {}", response))
+                .doOnError(error -> jsonLogging.error("Failed to fetch services: {}", error.getMessage()));
     }
 
     /**
@@ -127,8 +131,8 @@ public class YClientServiceImpl implements YClientService {
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
-                .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch services: " + error.getMessage()));
+                .doOnSuccess(response -> jsonLogging.info("Response from Yclients: {}", response))
+                .doOnError(error -> jsonLogging.error("Failed to fetch services: {}", error.getMessage()));
     }
 
     /**
@@ -158,8 +162,8 @@ public class YClientServiceImpl implements YClientService {
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
-                .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch employees: " + error.getMessage()));
+                .doOnSuccess(response -> jsonLogging.info("Response from Yclients: {}", response))
+                .doOnError(error -> jsonLogging.error("Failed to fetch employees: {}", error.getMessage()));
     }
 
     /**
@@ -197,8 +201,8 @@ public class YClientServiceImpl implements YClientService {
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
-                .doOnSuccess(response -> System.out.println("Response from Yclients: " + response))
-                .doOnError(error -> System.err.println("Failed to fetch sessions: " + error.getMessage()));
+                .doOnSuccess(response -> jsonLogging.info("Response from Yclients: {}", response))
+                .doOnError(error -> jsonLogging.error("Failed to fetch sessions: {}", error.getMessage()));
     }
 
 }

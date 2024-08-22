@@ -5,7 +5,7 @@ import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
+import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,17 +25,20 @@ public class DailyScheduler {
     private final ServiceMapper serviceMapper;
     private final YClientController yClientController;
     private final ApplicationEventPublisher eventPublisher;
+    private final JsonLoggingService jsonLogging;
 
     DailyScheduler(
             YClientController yClientController,
             EmployeeMapper employeeMapper,
             ServiceMapper serviceMapper,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            JsonLoggingService jsonLogging
     ) {
         this.yClientController = yClientController;
         this.employeeMapper = employeeMapper;
         this.serviceMapper = serviceMapper;
         this.eventPublisher = eventPublisher;
+        this.jsonLogging = jsonLogging;
     }
 
     private  List<EmployeeDTO> employeeDTOList;
@@ -53,15 +56,15 @@ public class DailyScheduler {
         Mono<String> staffMono = yClientController.getListEmployeesAvailableForBooking(null, null);
         staffMono.subscribe(response -> {
             employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
-            log.info("Staff Data - конвертированный лист с ДТО с данными о работниках: " + employeeDTOList);
-        }, error -> log.error("Failed to fetch staff data: " + error.getMessage()));
+            jsonLogging.info("Staff Data - конвертированный лист с ДТО с данными о работниках: {}", employeeDTOList);
+        }, error -> jsonLogging.error("Failed to fetch staff data: {}", error.getMessage()));
 
         Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking(null, null, null);
         servicesMono.subscribe(response -> {
             serviceInformationDTOList = serviceMapper.mapJsonToServiceList(response);
-            log.info("Services Data конвертированный лист с ДТО с данными об услугах: " + serviceInformationDTOList);
-        }, error -> log.error("Failed to fetch services data: " + error.getMessage()));
-
+            jsonLogging.info("Services Data конвертированный лист с ДТО с данными об услугах: {}",
+                    serviceInformationDTOList);
+        }, error -> jsonLogging.error("Failed to fetch services data: {}", error.getMessage()));
 
     }
 

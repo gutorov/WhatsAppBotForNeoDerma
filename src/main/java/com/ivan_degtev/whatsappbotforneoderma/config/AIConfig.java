@@ -10,8 +10,10 @@ import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
+import dev.langchain4j.internal.Json;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -40,6 +42,8 @@ public class AIConfig {
     private final ServiceInformationRepository serviceInformationRepository;
     private final UserRepository userRepository;
 
+    private final JsonLoggingService jsonLogging;
+
 
     public AIConfig(
             YClientServiceImpl yClientService,
@@ -49,8 +53,9 @@ public class AIConfig {
             AnswerCheckMapper answerCheckMapper,
             AppointmentsRepository appointmentsRepository,
             ServiceInformationRepository serviceInformationRepository,
-            UserRepository userRepository
-            ) {
+            UserRepository userRepository,
+            JsonLoggingService jsonLogging
+    ) {
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
         this.employeeMapper = employeeMapper;
@@ -59,6 +64,7 @@ public class AIConfig {
         this.appointmentsRepository = appointmentsRepository;
         this.serviceInformationRepository = serviceInformationRepository;
         this.userRepository = userRepository;
+        this.jsonLogging = jsonLogging;
     }
 
     @Bean
@@ -113,7 +119,8 @@ public class AIConfig {
                         answerCheckMapper,
                         serviceInformationRepository,
                         appointmentsRepository,
-                        userRepository
+                        userRepository,
+                        jsonLogging
                 ))
                 .build();
     }

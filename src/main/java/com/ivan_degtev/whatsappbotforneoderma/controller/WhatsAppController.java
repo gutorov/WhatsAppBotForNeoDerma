@@ -60,18 +60,6 @@ public class WhatsAppController {
         chatpushService.getMessageFromWebhook(headers, payload);
     }
 
-//    @PostMapping("/send-message")
-//    public Mono<SendingMessageResponse> sendMessage(
-//            @RequestParam String text,
-//            @RequestParam String phone
-//    ) {
-//        return chatpushService.sendMessage(text, phone)
-//                .doOnSuccess(response -> {
-//                    System.out.println("Message sent successfully: " + response.toString());
-//                })
-//                .doOnError(error -> System.err.println("Failed to send message: " + error.getMessage()));
-//    }
-
 
     /**
      * Тестовый метод для получения всех настроенных веб-хуков, не используется

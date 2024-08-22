@@ -22,6 +22,7 @@ import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRep
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 
+import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import dev.langchain4j.agent.tool.Tool;
 
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,8 @@ public class Tools {
     private final ServiceInformationRepository serviceInformationRepository;
     private final AppointmentsRepository appointmentsRepository;
     private final UserRepository userRepository;
+
+    private final JsonLoggingService jsonLogging;
 //    private User user;
 //    private Appointment appointment;
 //    private ServiceInformation serviceInformation;
@@ -64,7 +67,8 @@ public class Tools {
             AnswerCheckMapper answerCheckMapper,
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            JsonLoggingService jsonLogging
     ) {
         log.info("Создаем Tools с инжектированными зависимостями");
 
@@ -76,6 +80,7 @@ public class Tools {
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
+        this.jsonLogging = jsonLogging;
     }
 
     @Tool("""
@@ -84,7 +89,7 @@ public class Tools {
             """)
     public String getFreeDates(String question) {
         String freeDates = yClientService.getListDatesAvailableForBooking(null).block();
-        log.info("Тул нашёл свободные даты {}", freeDates);
+        jsonLogging.info("Тул нашёл свободные даты {}", freeDates);
         return freeDates;
     }
     @Tool("""
@@ -96,7 +101,7 @@ public class Tools {
     //внутренний id услуги
     public List<ServiceInformationDTO> getAllServices(String question) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
-                log.info("Тул вывел все услуги {}", serviceInformationList);
+                jsonLogging.info("Тул вывел все услуги {}", serviceInformationList);
         return serviceInformationList;
     }
 
@@ -117,8 +122,8 @@ public class Tools {
             if (service.getTitle().toLowerCase().contains(serviceName.toLowerCase())) {
                 String serviceId = service.getServiceId();
 
-                User currentUser = userRepository.findUserByChatId(currentChatId).
-                        orElseThrow(() -> new NotFoundException("Юзер с чат-id " + currentChatId + " не найден!"));
+                User currentUser = userRepository.findUserByChatId(currentChatId)
+                                .orElseThrow(() -> new NotFoundException("Юзер с чат-id " + currentChatId + " не найден!"));
                 Appointment currentAppointments = new Appointment();
                 ServiceInformation currentServiceInformation = new ServiceInformation(serviceId);
                 currentAppointments.setServicesInformation(List.of(currentServiceInformation));
@@ -128,12 +133,12 @@ public class Tools {
 //                appointment.setServicesInformation(List.of(serviceInformation));
 //                user.setAppointments(List.of(appointment));
                 userRepository.save(currentUser);
-                log.info("Нашёл совпадение по имени услуги и записал в сущность и сохранил в юзера {}",
+                jsonLogging.info("Нашёл совпадение по имени услуги и записал в сущность и сохранил в юзера {}",
                         currentServiceInformation.toString());
                 return serviceId;
             }
         }
-        log.warn("Услуга не найдена: {}", serviceName);
+        jsonLogging.error("Услуга не найдена: {}", serviceName);
         throw new NotFoundException("Услуга с таким названием не найдена");
     }
 
@@ -158,7 +163,8 @@ public class Tools {
 
         List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(staffs);
 
-        log.info("Staff Data - конвертированный лист с ДТО с данными о работниках: " + employeeDTOList);
+        jsonLogging.info("Staff Data - конвертированный лист с ДТО с данными о работниках: {}",
+                employeeDTOList);
         return employeeDTOList;
     }
     @Tool("""
@@ -176,9 +182,9 @@ public class Tools {
             Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
             currentAppointments.setStaffId(staffId);
             appointmentsRepository.save(currentAppointments);
-            log.info("сохранил в БД обновленную запись с id сотрудника {}", currentAppointments.toString());
+            jsonLogging.info("сохранил в БД обновленную запись с id сотрудника {}", currentAppointments.toString());
         } else {
-            log.warn("Сотрудник с таким id не найден: {}", staffId);
+            jsonLogging.error("Сотрудник с таким id не найден: {}", staffId);
             throw new NotFoundException("Сотрудник с таким id не найден");
         }
     }
@@ -205,7 +211,7 @@ public class Tools {
                 .block();
         List<AvailableSessionDTO> availableSessionDTOS =
                 nearestAvailableSessionMapper.mapJsonToNearestAvailableSessionList(response);
-        log.info("Получил из мапера лист с доступными сеансами для брони {}",
+        jsonLogging.info("Получил из мапера лист с доступными сеансами для брони {}",
                 availableSessionDTOS.stream()
                         .map(Object::toString)
                         .collect(Collectors.joining(", ")));
@@ -231,7 +237,7 @@ public class Tools {
                 .block();
         List<AvailableSessionDTO> availableSessionDTOS =
                 nearestAvailableSessionMapper.mapJsonToAvailableSessionListForSpecificDate(response);
-        log.info("Получил из мапера лист с доступными сеансами для брони строго на заданную дату {}",
+        jsonLogging.info("Получил из мапера лист с доступными сеансами для брони строго на заданную дату {}",
                 availableSessionDTOS.stream()
                         .map(Object::toString)
                         .collect(Collectors.joining(", ")));
@@ -255,11 +261,11 @@ public class Tools {
             Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
             currentAppointments.setDatetime(OffsetDateTime.parse(dateTime));
             appointmentsRepository.save(currentAppointments);
-            log.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}",
+            jsonLogging.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}",
                     currentAppointments.toString());
         } else {
-            log.warn("Указанная клиентом дата либо пустая, либо отсутствует в списке доступных дат для бронирования: {}",
-                    dateTime);
+            jsonLogging.error("Указанная клиентом дата либо пустая, либо отсутствует в списке доступных " +
+                            "дат для бронирования: {}", dateTime);
             throw new NotFoundException("Указанная клиентом дата либо пустая, " +
                     "либо отсутствует в списке доступных дат для бронирования");
         }

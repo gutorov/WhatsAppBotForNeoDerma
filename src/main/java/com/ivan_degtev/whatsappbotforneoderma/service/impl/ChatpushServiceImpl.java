@@ -71,26 +71,6 @@ public class ChatpushServiceImpl extends ChatPushServiceAdapter {
         }
     }
 
-//    /**
-//     * Метод для возврата ответа юзеру, принимает тело ответа(строку) и телефон(строку).
-//     * Сериализует ответ в WebhookPayloadOutgoing, делает сервисные сохранения в БД и возвращает ответ через ручку веб-хуков
-//     */
-//    public Mono<SendingMessageResponse> sendMessage(String text, String phone) {
-//        return webClient.post()
-//                .uri(uriBuilder -> uriBuilder
-//                        .path("/delivery")
-//                        .queryParam("text", text)
-//                        .queryParam("phone", phone)
-//                        .build())
-//                .header("Authorization", "Bearer " + chatpushApiKey)
-//                .retrieve()
-//                .bodyToMono(String.class)
-//                .doOnNext(responseString -> {
-//                    log.info("Received response string: {}", responseString);
-//                })
-//                .flatMap(this::convertStringToWebhookPayloadOutgoing);
-//    }
-
     private Mono<WebhookPayload> convertStringToWebhookPayload(String stringPayload) {
         try {
             WebhookPayload request = objectMapper.readValue(stringPayload, WebhookPayload.class);
@@ -99,14 +79,6 @@ public class ChatpushServiceImpl extends ChatPushServiceAdapter {
             return Mono.error(new RuntimeException("Failed to deserialize incoming request", e));
         }
     }
-//    private Mono<SendingMessageResponse> convertStringToWebhookPayloadOutgoing(String stringPayload) {
-//        try {
-//            SendingMessageResponse responce = objectMapper.readValue(stringPayload, SendingMessageResponse.class);
-//            return Mono.just(responce);
-//        } catch (Exception e) {
-//            return Mono.error(new RuntimeException("Failed to deserialize outgoing request", e));
-//        }
-//    }
 
     /**
      * Тестовый метод, получает все активные веб-хуки
