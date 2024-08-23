@@ -98,6 +98,7 @@ public class AIConfig {
                 .apiKey(openAiToken)
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
 //                .responseFormat("json_object")
+//                .temperature(0.5)
                 .logRequests(true)
                 .logRequests(true)
                 .build();

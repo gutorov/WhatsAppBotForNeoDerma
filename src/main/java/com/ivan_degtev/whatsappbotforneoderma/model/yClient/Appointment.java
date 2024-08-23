@@ -10,7 +10,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 
@@ -42,8 +41,8 @@ public class Appointment {
      * Поле показыывает полностью заполненный appointment  и готовый для отправки через post-запрос
      * Проствавляется в финальном Tool, чекается в сервисе langchain4j
      */
-    @JsonProperty("completely_filled")
-    private Boolean completelyFilled;
+    @JsonProperty("completed_booking")
+    private Boolean completedBooking;
 
     /**
      * Поле нужно для сохранения состояния текущей сессии по актуальной записи для связывания

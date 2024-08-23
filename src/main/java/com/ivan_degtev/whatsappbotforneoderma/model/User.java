@@ -28,7 +28,7 @@ public class User implements BaseEntity {
     private Long id;
 
     //ключевое поле - неизменно при запросах и ответах, поиск по нему в БД
-    @NotNull
+    @Column(unique = true, nullable = false)
     @JsonProperty("chat_id")
     private String chatId;
 

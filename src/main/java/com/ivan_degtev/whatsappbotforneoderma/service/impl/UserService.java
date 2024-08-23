@@ -69,7 +69,7 @@ public class UserService {
         if (currentUser.getUniqueIdForAppointment() == null) {
             currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
             userRepository.save(currentUser);
-        } else if (currentUser.getAppointments().stream().allMatch(Appointment::getCompletelyFilled)) {
+        } else if (currentUser.getAppointments().stream().allMatch(Appointment::getCompletedBooking)) {
             currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
             userRepository.save(currentUser);
         }

@@ -36,6 +36,7 @@
         <langchain4j.open.ai.version>0.33.0</langchain4j.open.ai.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <jackson.databind.nullable.version>0.2.6</jackson.databind.nullable.version>
+        <mockito.version>5.12.0</mockito.version>
     </properties>
 
     <dependencies>
@@ -105,6 +106,13 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

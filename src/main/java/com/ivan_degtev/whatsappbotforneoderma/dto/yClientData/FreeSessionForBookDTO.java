@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -16,7 +17,7 @@ public class FreeSessionForBookDTO {
     @JsonProperty("data")
     private List<DataInformation> data;
     @JsonProperty("meta")
-    private MetaInformation meta;
+    private List<String> meta;
 
     @Setter
     @Getter
@@ -28,14 +29,8 @@ public class FreeSessionForBookDTO {
         private Integer seanceLength;
         @JsonProperty("sum_length")
         private Integer sumLength;
-        @JsonProperty("date_time")
+        @JsonProperty("datetime")
         private OffsetDateTime dateTime;
 
-    }
-    @Setter
-    @Getter
-    @ToString
-    public static class MetaInformation {
-        String message;
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 
 import java.util.Scanner;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -77,7 +78,7 @@ public class LangChain4jService {
     public void testLLMLogicWithScanner() {
         User currentUser = new User();
         currentUser.setChatId("111");
-
+        currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
         userRepository.save(currentUser);
 
 
@@ -92,8 +93,9 @@ public class LangChain4jService {
             String currentChatId = currentUser.getChatId();
 
             String answer = assistantTest.chat(question, "111");
-            log.info("Ответ от тест чата {}", answer);
+            log.info("Ответ от тест чата: {}", answer);
         }
+        log.info("Сканнер закрыт!");
     }
     public void testSendMessage() {
         Scanner scanner = new Scanner(System.in);
