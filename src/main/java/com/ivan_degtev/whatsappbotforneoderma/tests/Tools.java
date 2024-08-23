@@ -101,7 +101,7 @@ public class Tools {
     //внутренний id услуги
     public List<ServiceInformationDTO> getAllServices(String question) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
-                jsonLogging.info("Тул вывел все услуги {}", serviceInformationList);
+        jsonLogging.info("Тул вывел все услуги {}", serviceInformationList);
         return serviceInformationList;
     }
 
@@ -125,6 +125,7 @@ public class Tools {
                 User currentUser = userRepository.findUserByChatId(currentChatId)
                                 .orElseThrow(() -> new NotFoundException("Юзер с чат-id " + currentChatId + " не найден!"));
                 Appointment currentAppointments = new Appointment();
+                currentAppointments.setUniqueIdForAppointment(currentUser.getUniqueIdForAppointment());
                 ServiceInformation currentServiceInformation = new ServiceInformation(serviceId);
                 currentAppointments.setServicesInformation(List.of(currentServiceInformation));
                 currentUser.setAppointments(List.of(currentAppointments));
@@ -178,11 +179,12 @@ public class Tools {
             String currentChatId
     ) {
         if (staffId != null && !staffId.isEmpty()) {
-            //  ПЕРЕПИСАТЬ С ИСПОЛЬЗОВАНИЕМ АЙДИ СЕАНСА, ПРИДУМАТЬ КАК СОХРАНЯТЬ СОСТОЯНИЕ ТЕКУЩЕЙ СЕССИИ
-            Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
-            currentAppointments.setStaffId(staffId);
-            appointmentsRepository.save(currentAppointments);
-            jsonLogging.info("сохранил в БД обновленную запись с id сотрудника {}", currentAppointments.toString());
+            // Поиск актуального объекта Appointment для текущей сессии
+            Appointment actualAppointment = getActualAppointmentForCurrentSession(currentChatId);
+
+            actualAppointment.setStaffId(staffId);
+            appointmentsRepository.save(actualAppointment);
+            jsonLogging.info("сохранил в БД обновленную запись с id сотрудника {}", actualAppointment.toString());
         } else {
             jsonLogging.error("Сотрудник с таким id не найден: {}", staffId);
             throw new NotFoundException("Сотрудник с таким id не найден");
@@ -258,11 +260,13 @@ public class Tools {
             String currentChatId
     ) {
         if (dateTime != null) {
-            Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
-            currentAppointments.setDatetime(OffsetDateTime.parse(dateTime));
-            appointmentsRepository.save(currentAppointments);
+            // Поиск актуального объекта Appointment для текущей сессии
+            Appointment actualAppointment = getActualAppointmentForCurrentSession(currentChatId);
+
+            actualAppointment.setDatetime(OffsetDateTime.parse(dateTime));
+            appointmentsRepository.save(actualAppointment);
             jsonLogging.info("сохранил в БД обновленную запись с актуальной датой и временем записи {}",
-                    currentAppointments.toString());
+                    actualAppointment.toString());
         } else {
             jsonLogging.error("Указанная клиентом дата либо пустая, либо отсутствует в списке доступных " +
                             "дат для бронирования: {}", dateTime);
@@ -279,18 +283,21 @@ public class Tools {
             Передай сюда chatId клиента {{currentChatId}}
             """)
     public boolean finalPartDialog(String currentChatId) {
-        Appointment currentAppointments = appointmentsRepository.findAllByUser_ChatId(currentChatId).get(0);
-        //ПЕРЕПИСАТЬ С АЙДИ ВНУТРЕННЕГО СОСТОЯНИЯ!
+        // Поиск актуального объекта Appointment для текущей сессии
+        Appointment actualAppointment = getActualAppointmentForCurrentSession(currentChatId);
+
+        //ВАЖНО! Текущий код должен работать только при записи на 1 услугу.
+        // ВАЖНО! После рефа, когда будем создавать записи на неск. услугу - переделать проверки
         ServiceInformation currentServiceInformation = serviceInformationRepository
-                .findAllByAppointment(currentAppointments).get(0);
-        if (currentAppointments.getDatetime() == null) {
+                .findAllByAppointment(actualAppointment).get(0);
+        if (actualAppointment.getDatetime() == null) {
                 throw new NoParameterException("В сущности appointment не сохранена дата и время записи на приём");
             }
-            if (currentAppointments.getStaffId() == null) {
+            if (actualAppointment.getStaffId() == null) {
                 throw new NoParameterException("В сущности appointment не сохранен id сотрудника к которому нужно " +
                         "записаться на приём");
             }
-            if (currentAppointments.getServicesInformation() == null) {
+            if (actualAppointment.getServicesInformation() == null) {
                 throw new NoParameterException("В сущности appointment нет связи с сущностью ServiceInformation," +
                         "которая хранит данные о забронированных услугах");
             }
@@ -298,8 +305,8 @@ public class Tools {
                 throw new NoParameterException("В сущности serviceInformation не сохранен id услуги для записи на приём");
             }
             String finalCheck =  yClientService.getListSessionsAvailableForBooking(
-                    String.valueOf(currentAppointments.getDatetime()),
-                    Long.valueOf(currentAppointments.getStaffId()),
+                    String.valueOf(actualAppointment.getDatetime()),
+                    Long.valueOf(actualAppointment.getStaffId()),
                     List.of(currentServiceInformation.getServiceId())
             ).block();
         FreeSessionForBookDTO freeSessionForBookDTO = answerCheckMapper.mapJsonToFreeSessionForBookDTO(finalCheck);
@@ -310,8 +317,8 @@ public class Tools {
                 freeSessionForBookDTO.getData()
                         .stream()
                         .anyMatch(dataInfo -> dataInfo.getDateTime()
-                                .equals(currentAppointments.getDatetime()))) {
-            currentAppointments.setCompletelyFilled(true);
+                                .equals(actualAppointment.getDatetime()))) {
+            actualAppointment.setCompletelyFilled(true);
             // САМЫЙ ВАЖНЫЙ ФЛАГ - СЧИТЫВАЕТСЯ В ОСНОВНОМ КОДЕ ПРИЛОЖЕНИЯ
             // И ПО НЕМУ ПОНИМАЕМ, ЧТО ЗАПИСЬ СОБРАНА И МОЖНО ОТПРАВЛЯТЬ POST-ЗАПРОС НА YACLIENT
             return true;
@@ -330,5 +337,16 @@ public class Tools {
         )
                 .block();
         return serviceMapper.mapJsonToServiceList(response);
+    }
+    private Appointment getActualAppointmentForCurrentSession(String currentChatId) {
+        User currentUser = userRepository.findUserByChatId(currentChatId)
+                .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
+        String currentUniqueIdForAppointment = currentUser.getUniqueIdForAppointment();
+        Appointment actualAppointments = appointmentsRepository
+                .findByUser_UniqueIdForAppointment(currentUniqueIdForAppointment)
+                .orElseThrow(() -> new NotFoundException("Не найден Appointment по UniqueIdForAppointment" +
+                        currentUniqueIdForAppointment));
+
+        return actualAppointments;
     }
 }

@@ -3,7 +3,6 @@ package com.ivan_degtev.whatsappbotforneoderma.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
-import dev.langchain4j.agent.tool.Tool;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -27,7 +25,7 @@ public class YClientController {
     private final String YClientUrl;
 
     @Value("${yclient.token}")
-    private final String yclientToken;
+    private final String yClientToken;
     private final WebClient webClient;
     private final YClientServiceImpl yclientService;
     private final Long companyId = 316398L;
@@ -37,17 +35,17 @@ public class YClientController {
             @Value("https://api.yclients.com/api/v1")
             String YClientUrl,
             @Value("${yclient.token}")
-            String yclientToken,
+            String yClientToken,
             WebClient.Builder webClientBuilder,
-            YClientServiceImpl yclientService
+            YClientServiceImpl yClientService
     ) {
         this.messageService = messageService;
         this.YClientUrl = YClientUrl;
-        this.yclientToken = yclientToken;
+        this.yClientToken = yClientToken;
         this.webClient = webClientBuilder.baseUrl("https://api.yclients.com/api/v1")
                 .defaultHeader(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .build();
-        this.yclientService = yclientService;
+        this.yclientService = yClientService;
     }
 
     /**

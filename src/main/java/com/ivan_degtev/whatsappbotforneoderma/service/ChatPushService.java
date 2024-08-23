@@ -31,4 +31,17 @@ public interface ChatPushService {
      * @return Замапленную в локал дто сущность ответа об отправке с данными
      */
     Mono<SendingMessageResponse> sendMessage(String text, String phone);
+
+    /**
+     * Утилитные метод для получения всех активных веб-хуков с чат-пушем
+     * @return json с данными - айди,тип сообщений с которыми работает и url на который посылает данные
+     */
+    Mono<Map<String, Object>> getAllWebhooks();
+
+    /**
+     * Метод для удаления конкретного(неактивного веб-хука)
+     * @param webhookId
+     * @return данные об успехе или неудачи в удалении
+     */
+    Mono<String> deleteWebhook(int webhookId);
 }

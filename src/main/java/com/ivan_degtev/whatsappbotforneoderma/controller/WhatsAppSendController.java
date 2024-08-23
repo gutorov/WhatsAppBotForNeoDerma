@@ -2,9 +2,6 @@ package com.ivan_degtev.whatsappbotforneoderma.controller;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.SendingMessageResponse;
 import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushService;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.ChatPushSenderServiceImpl;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.ChatpushServiceImpl;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,19 +16,19 @@ public class WhatsAppSendController {
 
     @Value("${ngrok.url}")
     private String ngrokUrl;
-    @Value("${chatpush.api.key}")
-    private String chatpushApiKey;
+    @Value("${chatPush.api.key}")
+    private String chatPushApiKey;
 
     private final ChatPushService chatPushService;
 
     public WhatsAppSendController(
             @Value("${ngrok.url}") String ngrokUrl,
-            @Value("${chatpush.api.key}")
-            String chatpushApiKey,
+            @Value("${chatPush.api.key}")
+            String chatPushApiKey,
             @Qualifier("chatPushSenderServiceImpl") ChatPushService chatPushService
     ) {
         this.ngrokUrl = ngrokUrl;
-        this.chatpushApiKey = chatpushApiKey;
+        this.chatPushApiKey = chatPushApiKey;
         this.chatPushService = chatPushService;
     }
 

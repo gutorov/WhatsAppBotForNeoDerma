@@ -1,8 +1,7 @@
-package com.ivan_degtev.whatsappbotforneoderma.service.impl;
+package com.ivan_degtev.whatsappbotforneoderma.service.impl.chatPush;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ivan_degtev.whatsappbotforneoderma.dto.SendingMessageResponse;
-import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushService;
 import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushServiceAdapter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,20 +17,20 @@ public class ChatPushSenderServiceImpl extends ChatPushServiceAdapter {
 
     @Value("${ngrok.url}")
     private String ngrokUrl;
-    @Value("${chatpush.api.key}")
-    private String chatpushApiKey;
+    @Value("${chatPush.api.key}")
+    private String chatPushApiKey;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
 
     public ChatPushSenderServiceImpl (
             @Value("${ngrok.url}") String ngrokUrl,
-            @Value("${chatpush.api.key}") String chatpushApiKey,
+            @Value("${chatPush.api.key}") String chatPushApiKey,
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper
     ) {
         this.ngrokUrl = ngrokUrl;
-        this.chatpushApiKey = chatpushApiKey;
+        this.chatPushApiKey = chatPushApiKey;
         this.webClient = webClientBuilder
                 .baseUrl("https://api.chatpush.ru/api/v1")
                 .build();
@@ -52,7 +51,7 @@ public class ChatPushSenderServiceImpl extends ChatPushServiceAdapter {
                         .queryParam("text", text)
                         .queryParam("phone", phone)
                         .build())
-                .header("Authorization", "Bearer " + chatpushApiKey)
+                .header("Authorization", "Bearer " + chatPushApiKey)
                 .retrieve()
                 .bodyToMono(String.class)
                 .doOnNext(responseString -> {
@@ -70,17 +69,16 @@ public class ChatPushSenderServiceImpl extends ChatPushServiceAdapter {
         }
     }
 
-    @Override
-    public Mono<String> createWebhook(String url, List<String> types) {
-        return webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/webhooks")
-                        .queryParam("url", url)
-                        .queryParam("types[]", String.join("&types[]=", types))
-                        .build())
-                .header("Authorization", "Bearer " + chatpushApiKey)
-                .retrieve()
-                .bodyToMono(String.class);
-
-    }
+//    @Override
+//    public Mono<String> createWebhook(String url, List<String> types) {
+//        return webClient.post()
+//                .uri(uriBuilder -> uriBuilder
+//                        .path("/webhooks")
+//                        .queryParam("url", url)
+//                        .queryParam("types[]", String.join("&types[]=", types))
+//                        .build())
+//                .header("Authorization", "Bearer " + chatPushApiKey)
+//                .retrieve()
+//                .bodyToMono(String.class);
+//    }
 }

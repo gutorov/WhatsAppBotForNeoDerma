@@ -24,14 +24,17 @@ public class YClientServiceImpl implements YClientService {
     private final JsonLoggingService jsonLoggingService;
 
     @Value("${yclient.token}")
-    private String yclientToken;
+    private String yClientToken;
     private final Long companyId = 316398L;
 
     public YClientServiceImpl(
             WebClient.Builder webClientBuilder,
             JsonLoggingService jsonLogging,
-            JsonLoggingService jsonLoggingService) {
-        this.webClient = webClientBuilder.baseUrl("https://api.yclients.com/api/v1").build();
+            JsonLoggingService jsonLoggingService
+    ) {
+        this.webClient = webClientBuilder
+                .baseUrl("https://api.yclients.com/api/v1")
+                .build();
         this.jsonLogging = jsonLogging;
         this.jsonLoggingService = jsonLoggingService;
     }
@@ -55,7 +58,7 @@ public class YClientServiceImpl implements YClientService {
                     return uriBuilder
                             .build(companyId);
                 })
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yClientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
@@ -92,7 +95,7 @@ public class YClientServiceImpl implements YClientService {
 
                     return uriBuilder.build(companyId);
                 })
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yClientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
@@ -127,7 +130,7 @@ public class YClientServiceImpl implements YClientService {
                             .path(pathBuilder.toString())
                             .build(companyId, staffId);
                 })
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yClientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
@@ -158,7 +161,7 @@ public class YClientServiceImpl implements YClientService {
                             .path(pathBuilder.toString())
                             .build(companyId);
                 })
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yClientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)
@@ -197,7 +200,7 @@ public class YClientServiceImpl implements YClientService {
                                     date != null ? date : ""
                             );
                 })
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yclientToken)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + yClientToken)
                 .header(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .retrieve()
                 .bodyToMono(String.class)

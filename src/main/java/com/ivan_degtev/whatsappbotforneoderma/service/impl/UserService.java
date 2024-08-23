@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import java.util.UUID;
@@ -45,7 +46,11 @@ public class UserService {
         if (!CheckingExistenceUserByChatId(currentChatId)) {
             User user = userMapper.convertWebhookPayloadToUser(webhookPayload);
             currentMessage = messageService.addNewMessage(webhookPayload);
-            user.setMessages(List.of(currentMessage));
+
+            List<Message> messages = new ArrayList<>();
+            messages.add(currentMessage);
+            user.setMessages(messages);
+
             userRepository.save(user);
         } else if (CheckingExistenceUserByChatId(currentChatId)) {
             currentMessage = messageService.addNextMessage(webhookPayload);

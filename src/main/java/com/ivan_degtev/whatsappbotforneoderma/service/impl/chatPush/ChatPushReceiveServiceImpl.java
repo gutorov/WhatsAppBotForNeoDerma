@@ -1,12 +1,11 @@
-package com.ivan_degtev.whatsappbotforneoderma.service.impl;
+package com.ivan_degtev.whatsappbotforneoderma.service.impl.chatPush;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ivan_degtev.whatsappbotforneoderma.dto.WebhookPayload;
-import com.ivan_degtev.whatsappbotforneoderma.dto.SendingMessageResponse;
 import com.ivan_degtev.whatsappbotforneoderma.model.enums.Direction;
-import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushService;
 import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushServiceAdapter;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -20,20 +19,20 @@ import java.util.Objects;
 
 @Service
 @Slf4j
-public class ChatpushServiceImpl extends ChatPushServiceAdapter {
+public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
 
-    @Value("${chatpush.api.key}")
-    private String chatpushApiKey;
+    @Value("${chatPush.api.key}")
+    private String chatPushApiKey;
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final UserService userService;
-    public ChatpushServiceImpl(
-            @Value("${chatpush.api.key}") String chatpushApiKey,
+    public ChatPushReceiveServiceImpl(
+            @Value("${chatPush.api.key}") String chatPushApiKey,
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
             UserService userService
     ) {
-        this.chatpushApiKey = chatpushApiKey;
+        this.chatPushApiKey = chatPushApiKey;
         this.webClient = webClientBuilder
                 .baseUrl("https://api.chatpush.ru/api/v1")
                 .build();
@@ -46,18 +45,18 @@ public class ChatpushServiceImpl extends ChatPushServiceAdapter {
      * основной метод взаимодействия(получения) сообщений из вотсапа по веб-хукам, при получении сообщения
      * отдаёт Mono<String> для дальнейшей работы внутри приложения.
      */
-    @Override
-    public Mono<String> createWebhook(String url, List<String> types) {
-        return webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/webhooks")
-                        .queryParam("url", url)
-                        .queryParam("types[]", String.join("&types[]=", types))
-                        .build())
-                .header("Authorization", "Bearer " + chatpushApiKey)
-                .retrieve()
-                .bodyToMono(String.class);
-    }
+//    @Override
+//    public Mono<String> createWebhook(String url, List<String> types) {
+//        return webClient.post()
+//                .uri(uriBuilder -> uriBuilder
+//                        .path("/webhooks")
+//                        .queryParam("url", url)
+//                        .queryParam("types[]", String.join("&types[]=", types))
+//                        .build())
+//                .header("Authorization", "Bearer " + chatPushApiKey)
+//                .retrieve()
+//                .bodyToMono(String.class);
+//    }
 
     @Override
     public void getMessageFromWebhook(
@@ -79,15 +78,15 @@ public class ChatpushServiceImpl extends ChatPushServiceAdapter {
             return Mono.error(new RuntimeException("Failed to deserialize incoming request", e));
         }
     }
-
-    /**
-     * Тестовый метод, получает все активные веб-хуки
-     */
-    public Mono<Map<String, Object>> getAllWebhooks() {
-        return webClient.get()
-                .uri("https://api.chatpush.ru/api/v1/webhooks/")
-                .header("Authorization", "Bearer " + chatpushApiKey)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
-    }
+//
+//    /**
+//     * Тестовый метод, получает все активные веб-хуки
+//     */
+//    public Mono<Map<String, Object>> getAllWebhooks() {
+//        return webClient.get()
+//                .uri("https://api.chatpush.ru/api/v1/webhooks/")
+//                .header("Authorization", "Bearer " + chatPushApiKey)
+//                .retrieve()
+//                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+//    }
 }
