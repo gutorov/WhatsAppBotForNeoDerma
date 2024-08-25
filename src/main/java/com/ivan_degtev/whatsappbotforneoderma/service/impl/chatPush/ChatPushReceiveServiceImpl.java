@@ -4,6 +4,7 @@ package com.ivan_degtev.whatsappbotforneoderma.service.impl.chatPush;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ivan_degtev.whatsappbotforneoderma.dto.WebhookPayload;
 import com.ivan_degtev.whatsappbotforneoderma.model.enums.Direction;
+import com.ivan_degtev.whatsappbotforneoderma.repository.MessageRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.ChatPushServiceAdapter;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -26,11 +27,14 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
     private final UserService userService;
+    private final MessageRepository messageRepository;
+
     public ChatPushReceiveServiceImpl(
             @Value("${chatPush.api.key}") String chatPushApiKey,
             WebClient.Builder webClientBuilder,
             ObjectMapper objectMapper,
-            UserService userService
+            UserService userService,
+            MessageRepository messageRepository
     ) {
         this.chatPushApiKey = chatPushApiKey;
         this.webClient = webClientBuilder
@@ -38,6 +42,7 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
                 .build();
         this.objectMapper = objectMapper;
         this.userService = userService;
+        this.messageRepository = messageRepository;
     }
 
 
@@ -64,10 +69,23 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
             String payload
     ) {
         WebhookPayload webhookPayload = convertStringToWebhookPayload(payload).block();
+        String chatPushMessageId = Objects.requireNonNull(webhookPayload).getPayload().getNewMessage().getMessage().getId();
+        //уникальный айди для каждого сообщения из чат пуш + нгрок
         if (Objects.nonNull(webhookPayload) &&
-        webhookPayload.getPayload().getNewMessage().getDirection().equals(Direction.incoming)) {
+        webhookPayload.getPayload().getNewMessage().getDirection().equals(Direction.incoming) &&
+                testForSingleWebhookProcessing(chatPushMessageId)) {
             userService.addingUserWhenThereIsNone(webhookPayload);
         }
+    }
+
+    /**
+     * Утилитный метод проверяет есть ли уже в БД сообщний сообщения с тем же айди , что и присываемое снова.
+     * Решает проблему множественной отправки сообщений через веб-хуки
+     * @param chatPushMessageId
+     * @return
+     */
+    private boolean testForSingleWebhookProcessing(String chatPushMessageId) {
+        return messageRepository.existsByChatPushMessageId(chatPushMessageId);
     }
 
     private Mono<WebhookPayload> convertStringToWebhookPayload(String stringPayload) {

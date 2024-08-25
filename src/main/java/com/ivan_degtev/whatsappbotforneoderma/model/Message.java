@@ -1,6 +1,7 @@
 package com.ivan_degtev.whatsappbotforneoderma.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.ivan_degtev.whatsappbotforneoderma.model.enums.Direction;
 import com.ivan_degtev.whatsappbotforneoderma.model.interfaces.BaseEntity;
 import jakarta.persistence.*;
@@ -21,6 +22,10 @@ public class Message implements BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true)
+    @JsonProperty("chat_push_message_id")
+    private String chatPushMessageId;
     private String type;
     private String text;
 
