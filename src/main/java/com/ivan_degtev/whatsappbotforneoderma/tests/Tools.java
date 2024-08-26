@@ -20,7 +20,7 @@ import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServiceImpl;
 
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import dev.langchain4j.agent.tool.Tool;

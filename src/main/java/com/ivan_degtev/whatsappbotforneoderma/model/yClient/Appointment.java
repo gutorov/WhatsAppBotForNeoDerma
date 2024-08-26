@@ -45,6 +45,12 @@ public class Appointment {
     private Boolean completedBooking;
 
     /**
+     * Финальный флаг, значащий, что данные были успешно отправлены на YClient и этот appointment завершён и в дальнейшем
+     * не должен быть использован.
+     */
+    @JsonProperty("application_sent")
+    private Boolean applicationSent;
+    /**
      * Поле нужно для сохранения состояния текущей сессии по актуальной записи для связывания
      * с текущим актуальным appointment, необходима именно в Tools LLM
      */

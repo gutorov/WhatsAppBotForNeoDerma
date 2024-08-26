@@ -2,7 +2,7 @@ package com.ivan_degtev.whatsappbotforneoderma.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;

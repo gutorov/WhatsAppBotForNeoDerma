@@ -9,7 +9,7 @@ import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
-import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
