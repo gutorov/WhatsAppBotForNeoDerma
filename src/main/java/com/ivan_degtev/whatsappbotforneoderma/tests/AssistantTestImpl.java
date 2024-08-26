@@ -24,7 +24,7 @@ public class AssistantTestImpl implements AssistantTest {
     }
 
     @Override
-    public String chat(String userMessage, String currentChatId) {
+    public String chat(String memoryId, String userMessage, String currentChatId) {
 
 
 

@@ -10,6 +10,7 @@ import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -20,11 +21,14 @@ public class MessageService {
     private final MessageMapper messageMapper;
     private final UserRepository userRepository;
 
+    @Transactional
     public Message addNewMessage(WebhookPayload webhookPayload) {
         Message message = messageMapper.convertWebhookPayloadToMessage(webhookPayload);
         messageRepository.save(message);
         return message;
     }
+
+    @Transactional
     public Message addNextMessage(WebhookPayload webhookPayload) {
         var chatId = webhookPayload.getPayload().getNewMessage().getChatId();
         User linkedUser = userRepository.findUserByChatId(chatId)

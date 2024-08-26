@@ -61,7 +61,7 @@ public class LangChain4jService {
         String textMessage = currentMessage.getText();
         String currentUserPhone = currentUser.getSenderPhoneNumber();
 
-        String LLMAnswer = assistantTest.chat(textMessage, currentChatId);
+        String LLMAnswer = assistantTest.chat(currentChatId, textMessage, currentChatId);
         jsonLogging.info("LLM answer: {}", LLMAnswer);
 
 
@@ -92,11 +92,12 @@ public class LangChain4jService {
             }
             String currentChatId = currentUser.getChatId();
 
-            String answer = assistantTest.chat(question, "111");
-            log.info("Ответ от тест чата: {}", answer);
+            String answer = assistantTest.chat(currentChatId, question, currentChatId);
+            log.info("Ответ от тест чата, сканер: {}", answer);
         }
         log.info("Сканнер закрыт!");
     }
+
     public void testSendMessage() {
         Scanner scanner = new Scanner(System.in);
         String currentUserPhone = "79951489346";
@@ -115,5 +116,7 @@ public class LangChain4jService {
         }
 
     }
+
+
 }
 

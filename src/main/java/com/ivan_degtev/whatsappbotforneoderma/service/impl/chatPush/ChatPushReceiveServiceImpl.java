@@ -62,7 +62,6 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
 //                .retrieve()
 //                .bodyToMono(String.class);
 //    }
-
     @Override
     public void getMessageFromWebhook(
             Map<String, String> headers,
@@ -71,9 +70,11 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
         WebhookPayload webhookPayload = convertStringToWebhookPayload(payload).block();
         String chatPushMessageId = Objects.requireNonNull(webhookPayload).getPayload().getNewMessage().getMessage().getId();
         //уникальный айди для каждого сообщения из чат пуш + нгрок
-        if (Objects.nonNull(webhookPayload) &&
-        webhookPayload.getPayload().getNewMessage().getDirection().equals(Direction.incoming) &&
-                testForSingleWebhookProcessing(chatPushMessageId)) {
+        if (
+                Objects.nonNull(webhookPayload) &&
+                        webhookPayload.getPayload().getNewMessage().getDirection().equals(Direction.incoming) &&
+                        !testForSingleWebhookProcessing(chatPushMessageId)
+        ) {
             userService.addingUserWhenThereIsNone(webhookPayload);
         }
     }

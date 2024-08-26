@@ -3,6 +3,7 @@ package com.ivan_degtev.whatsappbotforneoderma.tests;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
@@ -20,11 +21,13 @@ public interface AssistantTest {
             на конкретную дату или получить самую ближайшую возможную дату?
             Пользуйся инструментами для получения сервисной информации, например id услуг, специалистов и другое.
             Во многих инструментах требуется предоставить полностью корректный id чата: {{currentChatId}}
+            Текущий год - 2024.
             """)
     @UserMessage("""
             Вопрос клиента: {{userMessage}}
             """)
     String chat(
+            @MemoryId String memoryId,
             @V("userMessage")String userMessage,
             @V("currentChatId") String currentChatId
     );

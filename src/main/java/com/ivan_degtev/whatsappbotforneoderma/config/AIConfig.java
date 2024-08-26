@@ -13,7 +13,8 @@ import com.ivan_degtev.whatsappbotforneoderma.service.impl.YClientServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
-import dev.langchain4j.internal.Json;
+
+import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 
 @Configuration
 @Slf4j
@@ -43,7 +45,7 @@ public class AIConfig {
     private final UserRepository userRepository;
 
     private final JsonLoggingService jsonLogging;
-
+    private final PersistentChatMemoryStore persistentChatMemoryStore;
 
     public AIConfig(
             YClientServiceImpl yClientService,
@@ -54,7 +56,8 @@ public class AIConfig {
             AppointmentsRepository appointmentsRepository,
             ServiceInformationRepository serviceInformationRepository,
             UserRepository userRepository,
-            JsonLoggingService jsonLogging
+            JsonLoggingService jsonLogging,
+            PersistentChatMemoryStore persistentChatMemoryStore
     ) {
         this.yClientService = yClientService;
         this.serviceMapper = serviceMapper;
@@ -65,6 +68,7 @@ public class AIConfig {
         this.serviceInformationRepository = serviceInformationRepository;
         this.userRepository = userRepository;
         this.jsonLogging = jsonLogging;
+        this.persistentChatMemoryStore = persistentChatMemoryStore;
     }
 
     @Bean
@@ -109,9 +113,21 @@ public class AIConfig {
     //тест
     @Bean
     public AssistantTest assistantTest() {
+//        PersistentChatMemoryStore store = new PersistentChatMemoryStore();
+
+        /*
+          Создание объекта постоянной памяти на основе компонента - внутреннего хранилица памяти PersistentChatMemoryStore
+         */
+        ChatMemoryProvider chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder()
+                .id(memoryId)
+                .maxMessages(20)
+                .chatMemoryStore(persistentChatMemoryStore)
+                .build();
+
         return AiServices.builder(AssistantTest.class)
                 .chatLanguageModel(chatLanguageModel())
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+//                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .chatMemoryProvider(chatMemoryProvider)
                 .tools(new Tools(
                         yClientService,
                         serviceMapper,
@@ -126,27 +142,30 @@ public class AIConfig {
                 .build();
     }
 
-//    @Bean
-//    public Tools tools(
-//            YClientServiceImpl yClientService,
-//            ServiceMapper serviceMapper,
-//            EmployeeMapper employeeMapper,
-//            AvailableSessionMapper availableSessionMapper,
-//            AnswerCheckMapper answerCheckMapper,
-//            ServiceInformationRepository serviceInformationRepository,
-//            AppointmentsRepository appointmentsRepository,
-//            UserRepository userRepository
-//    ) {
-//        log.info("Создали бин тулов из нового класса тулов");
-//        return new Tools(
-//                yClientService,
-//                serviceMapper,
-//                employeeMapper,
-//                availableSessionMapper,
-//                answerCheckMapper,
-//                serviceInformationRepository,
-//                appointmentsRepository,
-//                userRepository
-//        );
+
+//    static class PersistentChatMemoryStore implements ChatMemoryStore {
+//
+//        private final DB db = DBMaker.fileDB("multi-user-chat-memory.db").transactionEnable().make();
+//        private final Map<String, String> map = db.hashMap("messages", STRING, STRING).createOrOpen();
+//
+//        @Override
+//        public List<ChatMessage> getMessages(Object memoryId) {
+//            String json = map.get((String) memoryId);
+//            return messagesFromJson(json);
+//        }
+//
+//        @Override
+//        public void updateMessages(Object memoryId, List<ChatMessage> messages) {
+//            String json = messagesToJson(messages);
+//            map.put((String) memoryId, json);
+//            db.commit();
+//        }
+//
+//        @Override
+//        public void deleteMessages(Object memoryId) {
+//            map.remove((String) memoryId);
+//            db.commit();
+//        }
 //    }
+
 }

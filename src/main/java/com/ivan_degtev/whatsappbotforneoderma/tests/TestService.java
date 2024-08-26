@@ -2,7 +2,6 @@ package com.ivan_degtev.whatsappbotforneoderma.tests;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ivan_degtev.whatsappbotforneoderma.dto.WebhookPayload;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.FreeSessionForBookDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
@@ -14,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Scanner;
 
 @Service
@@ -106,29 +104,23 @@ public class TestService {
         this.objectMapper = objectMapper;
     }
 
-    public void test11() {
+    public void test1User() {
         User currentUser = new User();
         currentUser.setChatId("111");
-//        Appointment appointment = new Appointment();
-//        ServiceInformation serviceInformation = new ServiceInformation();
-//        appointment.setServicesInformation(List.of(serviceInformation));
-//        currentUser.setAppointments(List.of(appointment));
 
         userRepository.save(currentUser);
 
-
         Scanner scanner = new Scanner(System.in);
-
 
         while (true) {
             String question = scanner.nextLine();
             String currentChatId = currentUser.getChatId();
 
-
-            String answer = assistantTest.chat(question, "111");
+            String answer = assistantTest.chat(currentChatId, question, currentChatId);
             log.info("Ответ от тест чата {}", answer);
         }
     }
+
 
     public void testsTests() {
         String exampleJson = """

@@ -65,7 +65,16 @@ public class UserService {
         langChain4jService.mainMethodByWorkWithLLM(currentUser, currentMessage);
     }
 
-    private void addingUniqueIdForAppointmentIsNone(User currentUser) {
+    /**
+     * Метод добавляет уникальный номер для юзера, для дальнейшей связи между юзером и объектами записи на сеанс
+     * ПРоисходит это лишь при первом сообщении(добавление нового юззера в базу)
+     * или
+     * если все связанные сущности сеанса у юзера финализированы(завершены) и это значит, что юзер хочет создать новую
+     * запись на сеас
+     * @param currentUser
+     */
+    @Transactional
+    public void addingUniqueIdForAppointmentIsNone(User currentUser) {
         if (currentUser.getUniqueIdForAppointment() == null) {
             currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
             userRepository.save(currentUser);
