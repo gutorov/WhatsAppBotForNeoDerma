@@ -1,7 +1,8 @@
 package com.ivan_degtev.whatsappbotforneoderma.config;
 
-import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.AIAnalyzer;
-import com.ivan_degtev.whatsappbotforneoderma.config.interfaces.Assistant;
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.AIAnalyzer;
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.Assistant;
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.QuestionAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.NearestAvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
@@ -75,7 +76,7 @@ public class AIConfig {
     public AIAnalyzer aiServices() {
         return AiServices.builder(AIAnalyzer.class)
                 .chatLanguageModel(chatLanguageModel())
-                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(100))
                 .build();
     }
     /**
@@ -113,14 +114,12 @@ public class AIConfig {
     //тест
     @Bean
     public AssistantTest assistantTest() {
-//        PersistentChatMemoryStore store = new PersistentChatMemoryStore();
-
         /*
           Создание объекта постоянной памяти на основе компонента - внутреннего хранилица памяти PersistentChatMemoryStore
          */
         ChatMemoryProvider chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder()
                 .id(memoryId)
-                .maxMessages(20)
+                .maxMessages(100)
                 .chatMemoryStore(persistentChatMemoryStore)
                 .build();
 
@@ -141,31 +140,11 @@ public class AIConfig {
                 ))
                 .build();
     }
-
-
-//    static class PersistentChatMemoryStore implements ChatMemoryStore {
-//
-//        private final DB db = DBMaker.fileDB("multi-user-chat-memory.db").transactionEnable().make();
-//        private final Map<String, String> map = db.hashMap("messages", STRING, STRING).createOrOpen();
-//
-//        @Override
-//        public List<ChatMessage> getMessages(Object memoryId) {
-//            String json = map.get((String) memoryId);
-//            return messagesFromJson(json);
-//        }
-//
-//        @Override
-//        public void updateMessages(Object memoryId, List<ChatMessage> messages) {
-//            String json = messagesToJson(messages);
-//            map.put((String) memoryId, json);
-//            db.commit();
-//        }
-//
-//        @Override
-//        public void deleteMessages(Object memoryId) {
-//            map.remove((String) memoryId);
-//            db.commit();
-//        }
-//    }
-
+    @Bean
+    public QuestionAnalyzer QuestionAnalyzer() {
+        return AiServices.builder(QuestionAnalyzer.class)
+                .chatLanguageModel(chatLanguageModel())
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(1))
+                .build();
+    }
 }

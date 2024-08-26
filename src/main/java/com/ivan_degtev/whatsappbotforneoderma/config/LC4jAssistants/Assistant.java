@@ -1,16 +1,13 @@
-package com.ivan_degtev.whatsappbotforneoderma.config.interfaces;
+package com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableStaffForBookingService;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.DataForWriteDTO;
-import com.ivan_degtev.whatsappbotforneoderma.model.User;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**

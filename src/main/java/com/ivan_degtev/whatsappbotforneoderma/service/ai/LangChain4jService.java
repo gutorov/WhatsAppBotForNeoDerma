@@ -1,5 +1,6 @@
 package com.ivan_degtev.whatsappbotforneoderma.service.ai;
 
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.QuestionAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.controller.LLMMemoryController;
 import com.ivan_degtev.whatsappbotforneoderma.controller.WhatsAppSendController;
 import com.ivan_degtev.whatsappbotforneoderma.model.Message;
@@ -28,6 +29,7 @@ public class LangChain4jService {
     @Value("${open.ai.token}")
     private String openAiToken;
     private final AssistantTest assistantTest;
+    private final QuestionAnalyzer questionAnalyzer;
     private final UserRepository userRepository;
     private final AppointmentsRepository appointmentsRepository;
     private final WhatsAppSendController whatsAppSendController;
@@ -39,6 +41,7 @@ public class LangChain4jService {
     public LangChain4jService(
             @Value("${open.ai.token}") String openAiToken,
             AssistantTest assistantTest,
+            QuestionAnalyzer questionAnalyzer,
             UserRepository userRepository,
             AppointmentsRepository appointmentsRepository,
             WhatsAppSendController whatsAppSendController,
@@ -48,6 +51,7 @@ public class LangChain4jService {
     ) {
         this.openAiToken = openAiToken;
         this.assistantTest = assistantTest;
+        this.questionAnalyzer = questionAnalyzer;
         this.userRepository = userRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.whatsAppSendController = whatsAppSendController;
@@ -65,7 +69,7 @@ public class LangChain4jService {
         String textMessage = currentMessage.getText();
         String currentUserPhone = currentUser.getSenderPhoneNumber();
 
-        if (assistantTest.greetingMessage(textMessage)) {
+        if (questionAnalyzer.greetingMessage(textMessage)) {
             String greeting = """
                     Привет! Это ассистент компании NeoDerma! 😊
                                         
@@ -91,7 +95,7 @@ public class LangChain4jService {
                     """;
             var answerFromSendMessage = whatsAppSendController.sendMessage(greeting, currentUserPhone).subscribe();
             jsonLogging.info("Отправил сообщение - приветствие ", answerFromSendMessage);
-        } else if (assistantTest.cleanHistoryMessage(textMessage)) {
+        } else if (questionAnalyzer.cleanHistoryMessage(textMessage)) {
             llmMemoryController.deleteMessages(currentChatId);
 
             String answerForDeletingHistory = """
@@ -104,6 +108,18 @@ public class LangChain4jService {
                     )
                     .subscribe();
             jsonLogging.info("Отправил сообщение об удаление истории ", answerFromSendMessage);
+        }
+
+        //ВАЖНО! ВРЕМЕННАЯ ЛОГИКА ДЛЯ ТЕСТИРОВАНИЯ ЛЛМ БЕЗ РЕАЛЬНОЙ ЗАПИСИ В YCLIENT -
+//        ЗАКОММЕНТИРОВАТЬ ПРИ РАБОТЕ
+        else {
+            String LLMAnswer = assistantTest.chat(currentChatId, textMessage, currentChatId);
+            jsonLogging.info("Ответ от ЛЛМ по сути вопроса: {}", LLMAnswer);
+            var answerFromSendMessage = whatsAppSendController
+                    .sendMessage(LLMAnswer, currentUserPhone)
+                    .subscribe();
+            jsonLogging.info("Отправил сообщение из сервиса LangChain4j в чатпуш сервис - в сообщению юзеру, " +
+                    "ответ от метода отправки {}", answerFromSendMessage);
         }
 
 
@@ -141,13 +157,7 @@ public class LangChain4jService {
 //                            });
 //                }
 //            }
-        String LLMAnswer = assistantTest.chat(currentChatId, textMessage, currentChatId);
-        jsonLogging.info("Ответ от ЛЛМ по сути вопроса: {}", LLMAnswer);
-        var answerFromSendMessage = whatsAppSendController
-                .sendMessage(LLMAnswer, currentUserPhone)
-                .subscribe();
-        jsonLogging.info("Отправил сообщение из сервиса LangChain4j в чатпуш сервис - в сообщению юзеру, " +
-                "ответ от метода отправки {}", answerFromSendMessage);
+
     }
 
 

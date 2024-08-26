@@ -23,15 +23,6 @@ public class AssistantTestImpl implements AssistantTest {
         this.llm = llm;
     }
 
-    @Override
-    public boolean greetingMessage(String userMessage) {
-        return false;
-    }
-
-    @Override
-    public boolean cleanHistoryMessage(String userMessage) {
-        return false;
-    }
 
     @Override
     public String chat(String memoryId, String userMessage, String currentChatId) {
