@@ -10,6 +10,7 @@ import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -21,22 +22,34 @@ public class MessageService {
     private final MessageMapper messageMapper;
     private final UserRepository userRepository;
 
-    @Transactional
-    public Message addNewMessage(WebhookPayload webhookPayload) {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Message addNewMessage(
+            WebhookPayload webhookPayload,
+            String chatPushMessageId
+    ) {
         Message message = messageMapper.convertWebhookPayloadToMessage(webhookPayload);
+        message.setChatPushMessageId(chatPushMessageId);
+        log.info("Замапил первое сообщение из вебхука для юзера в БД {}", message.toString());
         messageRepository.save(message);
+        log.info("Добавил первое сообщение для юзера в БД {}", message.toString());
         return message;
     }
 
-    @Transactional
-    public Message addNextMessage(WebhookPayload webhookPayload) {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Message addNextMessage(
+            WebhookPayload webhookPayload,
+            String chatPushMessageId
+    ) {
         var chatId = webhookPayload.getPayload().getNewMessage().getChatId();
         User linkedUser = userRepository.findUserByChatId(chatId)
                 .orElseThrow(() -> new NotFoundException("User with this chatId " + chatId + " not found!"));
 
         Message message = messageMapper.convertWebhookPayloadToMessage(webhookPayload);
+        message.setChatPushMessageId(chatPushMessageId);
+        log.info("Замапил новое сообщение из вебхука для юзера в БД {}", message.toString());
         message.setUser(linkedUser);
         messageRepository.save(message);
+        log.info("Добавил новое сообщение для юзера в БД {}", message.toString());
 
         return message;
     }

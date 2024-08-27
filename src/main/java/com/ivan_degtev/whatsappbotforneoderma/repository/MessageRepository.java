@@ -10,5 +10,6 @@ import java.util.List;
 @RestController
 public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findAllByUser(User user);
+
     boolean existsByChatPushMessageId(String chatPushMessageId);
 }

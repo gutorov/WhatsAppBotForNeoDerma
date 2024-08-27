@@ -21,7 +21,7 @@ public abstract class MessageMapper {
     @Mapping(source = "payload.newMessage.message.timestamp", target = "dataTime")
     @Mapping(source = "payload.newMessage.message.text", target = "text")
     @Mapping(source = "payload.newMessage.message.type", target = "type")
-    @Mapping(source = "payload.newMessage.message.id", target = "chatPushMessageId")
+//    @Mapping(source = "payload.newMessage.message.id", target = "chatPushMessageId")
     public abstract Message convertWebhookPayloadToMessage(WebhookPayload webhookPayload);
 
     /**

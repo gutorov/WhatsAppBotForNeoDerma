@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -28,6 +30,9 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
     private final ObjectMapper objectMapper;
     private final UserService userService;
     private final MessageRepository messageRepository;
+
+    private final Object lock = new Object();
+
 
     public ChatPushReceiveServiceImpl(
             @Value("${chatPush.api.key}") String chatPushApiKey,
@@ -70,12 +75,14 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
         WebhookPayload webhookPayload = convertStringToWebhookPayload(payload).block();
         String chatPushMessageId = Objects.requireNonNull(webhookPayload).getPayload().getNewMessage().getMessage().getId();
         //уникальный айди для каждого сообщения из чат пуш + нгрок
-        if (
-                Objects.nonNull(webhookPayload) &&
-                        webhookPayload.getPayload().getNewMessage().getDirection().equals(Direction.incoming) &&
-                        !testForSingleWebhookProcessing(chatPushMessageId)
-        ) {
-            userService.addingUserWhenThereIsNone(webhookPayload);
+        synchronized (lock) {
+            if (
+                    Objects.nonNull(webhookPayload) &&
+                            webhookPayload.getPayload().getNewMessage().getDirection().equals(Direction.incoming) &&
+                            !testForSingleWebhookProcessing(chatPushMessageId)
+            ) {
+                userService.addingUserWhenThereIsNone(webhookPayload);
+            }
         }
     }
 
@@ -85,7 +92,8 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
      * @param chatPushMessageId
      * @return
      */
-    private boolean testForSingleWebhookProcessing(String chatPushMessageId) {
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public boolean testForSingleWebhookProcessing(String chatPushMessageId) {
         return messageRepository.existsByChatPushMessageId(chatPushMessageId);
     }
 
