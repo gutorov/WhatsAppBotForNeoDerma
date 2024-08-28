@@ -57,6 +57,8 @@ public class Appointment {
     @JsonProperty("unique_id_for_appointment")
     private String uniqueIdForAppointment;
 
+
+//    @JoinColumn(name = "user_id", nullable = false)
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
     private User user;
 }

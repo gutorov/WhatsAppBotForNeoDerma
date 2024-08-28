@@ -25,6 +25,8 @@ import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServic
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import dev.langchain4j.agent.tool.Tool;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,6 +53,10 @@ public class Tools {
     private final UserRepository userRepository;
 
     private final JsonLoggingService jsonLogging;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
 //    private User user;
 //    private Appointment appointment;
 //    private ServiceInformation serviceInformation;
@@ -140,6 +146,7 @@ public class Tools {
 //                appointment.setServicesInformation(List.of(serviceInformation));
 //                user.setAppointments(List.of(appointment));
                 userRepository.save(currentUser); //!!!!! не сохраняется
+//                entityManager.flush();
                 jsonLogging.info("Тул getIdService нашёл совпадение по имени услуги и записал в сущность " +
                                 "и сохранил в юзера {}", currentServiceInformation.toString());
                 return serviceId;
