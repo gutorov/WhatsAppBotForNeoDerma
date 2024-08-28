@@ -51,8 +51,12 @@ public class UserService {
             user.setMessages(messages);
 
             userRepository.save(user);
+
+
         } else if (userChecks.checkingExistenceUserByChatId(currentChatId)) {
             currentMessage = messageService.addNextMessage(webhookPayload, chatPushMessageId);
+
+
         }
 
         User currentUser = userRepository.findUserByChatId(currentChatId)

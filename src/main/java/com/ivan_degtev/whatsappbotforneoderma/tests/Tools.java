@@ -34,6 +34,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -135,16 +136,21 @@ public class Tools {
 
                 User currentUser = userRepository.findUserByChatId(currentChatId)
                                 .orElseThrow(() -> new NotFoundException("Юзер с чат-id " + currentChatId + " не найден!"));
-//                Appointment currentAppointments = new Appointment();
-//                currentAppointments.setUniqueIdForAppointment(currentUser.getUniqueIdForAppointment());
-                var currentAppointment = getOrCreateActualAppointmentForCurrentSession(currentChatId);
-                ServiceInformation currentServiceInformation = new ServiceInformation(serviceId);
-                currentAppointment.setServicesInformation(List.of(currentServiceInformation));
-                currentUser.setAppointments(List.of(currentAppointment));
+                var currentAppointment = getOrCreateActualAppointmentForCurrentSession(
+                        currentUser,
+                        currentChatId
+                );
+                ArrayList<ServiceInformation> serviceInfoList = new ArrayList<>();
+                ArrayList<Appointment> appointmentList = new ArrayList<>();
 
-//                serviceInformation.setServiceId(serviceId);
-//                appointment.setServicesInformation(List.of(serviceInformation));
-//                user.setAppointments(List.of(appointment));
+                ServiceInformation currentServiceInformation = new ServiceInformation(serviceId);
+                serviceInfoList.add(currentServiceInformation);
+
+                currentAppointment.setServicesInformation(serviceInfoList);
+                appointmentList.add(currentAppointment);
+
+                currentUser.setAppointments(appointmentList);
+
                 userRepository.save(currentUser); //!!!!! не сохраняется
 //                entityManager.flush();
                 jsonLogging.info("Тул getIdService нашёл совпадение по имени услуги и записал в сущность " +
@@ -196,8 +202,13 @@ public class Tools {
         log.info("Чат айди в confirmationOfEmployeeSelection {}", currentChatId);
 
         if (staffId != null && !staffId.isEmpty()) {
+            User currentUser = userRepository.findUserByChatId(currentChatId)
+                    .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
             // Поиск актуального объекта Appointment для текущей сессии
-            Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(currentChatId);
+            Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(
+                    currentUser,
+                    currentChatId
+            );
 
             actualAppointment.setStaffId(staffId);
             appointmentsRepository.save(actualAppointment);
@@ -283,8 +294,13 @@ public class Tools {
         log.info("Чат айди в confirmationOfDateSelection {}", currentChatId);
 
         if (dateTime != null) {
+            User currentUser = userRepository.findUserByChatId(currentChatId)
+                    .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
             // Поиск актуального объекта Appointment для текущей сессии
-            Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(currentChatId);
+            Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(
+                    currentUser,
+                    currentChatId
+            );
 
             actualAppointment.setDatetime(OffsetDateTime.parse(dateTime));
             appointmentsRepository.save(actualAppointment);
@@ -312,7 +328,12 @@ public class Tools {
         log.info("Чат айди в finalPartDialog {}", currentChatId);
 
         // Поиск актуального объекта Appointment для текущей сессии
-        Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(currentChatId);
+        User currentUser = userRepository.findUserByChatId(currentChatId)
+                .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
+        Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(
+                currentUser,
+                currentChatId
+        );
 
         //ВАЖНО! Текущий код должен работать только при записи на 1 услугу.
         // ВАЖНО! После рефа, когда будем создавать записи на неск. услугу - переделать проверки
@@ -371,21 +392,23 @@ public class Tools {
     }
 
     @Transactional
-    public Appointment getOrCreateActualAppointmentForCurrentSession(String currentChatId) {
-        User currentUser = userRepository.findUserByChatId(currentChatId)
-                .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
+    public Appointment getOrCreateActualAppointmentForCurrentSession(
+            User currentUser,
+            String currentChatId
+    ) {
         String currentUniqueIdForAppointment = currentUser.getUniqueIdForAppointment();
 
-        // Ищем Appointment, если не находим - создаем новый
         Appointment actualAppointment = appointmentsRepository
                 .findByUser_UniqueIdForAppointment(currentUniqueIdForAppointment)
                 .orElseGet(() -> {
-//                    currentUser = userRepository.save(currentUser);
 
+                    ArrayList<Appointment> appointmentList = new ArrayList<>();
                     Appointment newAppointment = new Appointment();
                     newAppointment.setUniqueIdForAppointment(currentUniqueIdForAppointment);
-//                    newAppointment.setUser(currentUser);
-                    currentUser.setAppointments(List.of(newAppointment));
+                    appointmentList.add(newAppointment);
+
+                    currentUser.setAppointments(appointmentList);
+
                     return appointmentsRepository.save(newAppointment);
                 });
 
