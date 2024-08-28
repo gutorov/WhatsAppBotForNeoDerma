@@ -23,6 +23,7 @@ import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformat
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServiceImpl;
 
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
+import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 
 import jakarta.persistence.EntityManager;
@@ -94,7 +95,9 @@ public class Tools {
             Получить свободные даты для записи и вывести в человекочитаемом формате. Если дат очень много
             вывести результат в формате "свободны от - и до - "
             """)
-    public String getFreeDates(String question) {
+    public String getFreeDates(
+            @P("Вопрос клиента") String question
+    ) {
         String freeDates = yClientService.getListDatesAvailableForBooking(null).block();
         jsonLogging.info("Тул getFreeDates нашёл свободные даты {}", freeDates);
         return freeDates;
@@ -104,27 +107,27 @@ public class Tools {
             Получить List со всеми услугами, в этом листе есть базовая информация - названия услуг и их внутренний id
             для дальнейшего поиска.
             Исходя из запроса клиента - выведи общую информацию об услуге, которая ему нужна или предложи варианты 
-            похожих услуг.
+            похожих услуг. Выводи всегда случайно выбранные услуги из этого листа.
             """)
     //внутренний id услуги
-    public List<ServiceInformationDTO> getAllServices(String question) {
+    public List<ServiceInformationDTO> getAllServices(
+            @P("Вопрос клиента с упоминанием нужной ему услуги") String question
+    ) {
         List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
         jsonLogging.info("Тул getAllServices вывел все услуги {}", serviceInformationList);
         return serviceInformationList;
     }
 
     @Tool("""
-            Внутренний инструмент для сохранения выбранных данных.
+            Внутренний инструмент для сохранения данных о выбранной услуге.
             Использовать, если клиент  в контексте выбрал на какую услугу он хочет записаться.
-            Передай в метод полное название услуги {{serviceName}}, как указано в документации.
-            Передай также chatId клиента {{currentChatId}}.
+            Передай в метод полное название услуги: {{serviceName}}, как указано в документации и chatId клиента: {{currentChatId}}.
             В ответ ты получишь внутренний id услуги, запомни его.
             """)
-    //Если клиент говорит "запишите меня на дизайн стрижку",
     @Transactional
     public String getIdService(
-            String serviceName,
-            String currentChatId
+            @P("Название услуги, о которой говорил клиент") String serviceName,
+            @P("ID текущего чата")String currentChatId
     ) {
         log.info("Чат айди в getIdService {}", currentChatId);
 
@@ -151,7 +154,7 @@ public class Tools {
 
                 currentUser.setAppointments(appointmentList);
 
-                userRepository.save(currentUser); //!!!!! не сохраняется
+                userRepository.save(currentUser);
 //                entityManager.flush();
                 jsonLogging.info("Тул getIdService нашёл совпадение по имени услуги и записал в сущность " +
                                 "и сохранил в юзера {}", currentServiceInformation.toString());
@@ -164,11 +167,13 @@ public class Tools {
 
     @Tool("""
             Дать информацию клиенту обо всех доступных для бронирования сотрудниках.
-            Если клиент указал название услуги - передай ее id в {{serviceId}}
+            Если клиент указал название услуги - передай ее id в: {{serviceId}}
             Если клиент назвал какое-то имя сотрудника ранее - сравни данные из полученного в результате листа с именем,
             которое он назвал и ответь, есть ли указанный сотрудник в списке бронирования.
             """)
-    public List<EmployeeDTO> getListEmployeesForCurrentServices(String serviceId) {
+    public List<EmployeeDTO> getListEmployeesForCurrentServices(
+            @P("ID услуги, о которой говорил клиент") String serviceId
+    ) {
 
         String staffs;
         if (serviceId != null || !serviceId.isEmpty()) {
@@ -188,16 +193,15 @@ public class Tools {
         return employeeDTOList;
     }
     @Tool("""
-            Внутренний инструмент для сохранения выбранных данных.
+            Внутренний инструмент для сохранения данных о выбранном сотруднике.
             Использовать, если пользователь  в контексте выбрал к какому сотруднику он намерен пойти.
-            Передай в метод id этого сотрудника в поле {{staffId}}.
-            Передай также и chatId клиента {{currentChatId}}.
+            Передай сюда id выбранного сотрудника: {{staffId}} и id чата клиента: {{currentChatId}}.
             """)
     @Transactional
     //Пойми из контекста твёрдость решения пользователя.
     public void confirmationOfEmployeeSelection(
-            String staffId,
-            String currentChatId
+            @P("ID сотрудника, которого выбрал клиент") String staffId,
+            @P("ID текущего чата")String currentChatId
     ) {
         log.info("Чат айди в confirmationOfEmployeeSelection {}", currentChatId);
 
@@ -222,14 +226,14 @@ public class Tools {
 
     @Tool("""
             Сейчас клиент интересуется самым ближайшим временем, когда можно забронировать. 
-            Клиент уже назвал желаемую услугу и выбрал специалиста. Передай в метод выбранные им id услуги {{serviceId}}
-            и id сотрудника {{staffId}}
+            Клиент уже назвал желаемую услугу и выбрал специалиста. Передай в метод выбранные им id услуги: {{serviceId}}
+            и id сотрудника: {{staffId}}
             В ответ ты получишь список с данными по свободным сеансам для брони(дату, время и длину сеанса) 
             - выведи эти данные клиенту.
             """)
     public List<AvailableSessionDTO> getListNearestAvailableSessions(
-            String serviceId,
-            String staffId
+            @P("ID услуги, которую выбрал клиент") String serviceId,
+            @P("ID сотрудника, которого выбрал клиент") String staffId
     ) {
         if (staffId == null || staffId.isEmpty()) {
             throw new NoParameterException("Не был передам id услуги для которой нужно произвести поиск свободных для " +
@@ -253,14 +257,14 @@ public class Tools {
     @Tool("""
             Сейчас клиент интересуется можно ли записаться на сеанс строго на определённую дату.
             Клиент уже назвал нужную ему дату, желаемую услугу и выбрал специалиста.
-            Передай в метод выбранные им дату {{date}}, id услуги {{serviceId}} и id сотрудника {{staffId}}
+            Передай в метод выбранные им дату: {{date}}, id услуги: {{serviceId}} и id сотрудника: {{staffId}}
             В ответ ты получишь список с данными по свободным сеансам для брони(дату, время и длину сеанса)
             - выведи эти данные клиенту.
             """)
     public List<AvailableSessionDTO> getListNearestAvailableSessionsForSpecificDate(
-            String date,
-            String serviceId,
-            String staffId
+            @P("Дата, на которую хочет записаться клиент") String date,
+            @P("ID услуги, которую выбрал клиент") String serviceId,
+            @P("ID сотрудника, которого выбрал клиент") String staffId
     ) {
         String response = yClientService.getListSessionsAvailableForBooking(
                 date,
@@ -279,17 +283,17 @@ public class Tools {
     @Tool("""
             Если клиент точно выбрал и подтвердил на какую дату и время ему необходима запись.
             Ранее он выбрал сотрудника и услугу и ты использовал внутренние инструменты для сохранения этих данных!
-            Передай в метод эту дату и время {{dateTime}} в формате iso8601, данные о доступных датах {{availableSessionDTOS}}
-            и chatId клиента {{currentChatId}}
+            Передай в метод эту дату и время: {{dateTime}} в формате iso8601, данные о доступных датах: {{availableSessionDTOS}}
+            и chatId клиента: {{currentChatId}}
             """)
     //Дата и время, указанные клиентом совпадают с информацией о доступных датах {{availableSessionDTOS}},
     // которую ты получал ранее.
     // Пойми из контекста твёрдость решения пользователя.
     @Transactional
     public void confirmationOfDateSelection(
-            String dateTime,
+            @P("Дата и время в полном формате, на которые записывается клиент") String dateTime,
 //            List<AvailableSessionDTO> availableSessionDTOS,
-            String currentChatId
+            @P("ID текущего чата") String currentChatId
     ) {
         log.info("Чат айди в confirmationOfDateSelection {}", currentChatId);
 
@@ -315,16 +319,17 @@ public class Tools {
     }
     @Tool("""
             Последний инструмент в цепочки взаимодействий с клиентом. Клиент выбрал и подтвердил услугу, сотрудника и дату
-            со временем, на которые он записывается. Эти данные были обозначены и ты использовал все внутренние инструменты
-            для сохранения данных.
+            со временем, на которые он записывается. Эти данные были обозначены и подтверждены.
             Здесь происходит финальная проверка - если все успешно - с клиентом можно попрощаться и сообщить об успехе
             записи, выведя данные о его сеансе.
             Если есть проблемы - значит какая-то информация не была сохранена и ее нужно уточнить - выполнил соответствующие
             инструменты.
-            Передай сюда chatId клиента {{currentChatId}}
+            Передай сюда chatId клиента: {{currentChatId}}
             """)
     @Transactional
-    public boolean finalPartDialog(String currentChatId) {
+    public boolean finalPartDialog(
+            @P("ID текущего чата") String currentChatId
+    ) {
         log.info("Чат айди в finalPartDialog {}", currentChatId);
 
         // Поиск актуального объекта Appointment для текущей сессии

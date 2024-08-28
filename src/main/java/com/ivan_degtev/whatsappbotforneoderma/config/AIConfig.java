@@ -127,11 +127,8 @@ public class AIConfig {
         return OpenAiChatModel.builder()
                 .apiKey(openAiToken)
                 .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
-//                .responseFormat("json_object")
-//                .temperature(0.5)
                 .logRequests(true)
                 .logRequests(true)
-//                .timeout(Duration.ofSeconds(30))
                 .build();
     }
 

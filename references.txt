@@ -1,0 +1,130 @@
+Received payload: {
+"type":"whatsapp_incoming_msg",
+"payload":{
+"new_message":
+{"message":
+{"id":"false_79951489346@c.us_A755BE462D3A793366D3D5084315858F",
+"timestamp":1723635773,"type":"text","text":"Тест 9",
+"reply_to_message_id":null},
+"direction":"incoming",
+"sender_id":"79951489346@c.us",
+"chat_id":"79951489346@c.us",
+"sender_name":null,
+"sender_phone_number":"79951489346"},
+"delivery_id":null}
+}
+
+Тело ответа
+Received payload:
+{
+"type":
+"whatsapp_incoming_msg",
+"payload":
+{"new_message":
+{"message":
+{"id":"true_79951489346@c.us_103238695THISISBOT",
+"timestamp":1723642009,
+"type":"text",
+"text":"Привет 2",
+"reply_to_message_id":null},
+"direction":"outgoing",
+"sender_id":"79937893754@c.us",
+"chat_id":"79951489346@c.us",
+"sender_name":null,
+"sender_phone_number":"79937893754"},
+"delivery_id":148464411}
+}
+
+компани айди = 316398
+айди сотрудника = 1592958
+айди услуги =
+16356935
+14572839
+
+дата = 2024-08-17T10:00:00
+
+
+Данные по вызову апи опен аи для тонкой настройки ассистента
+
+```
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.core.io.FileSystemResource;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class OpenAITuningService {
+
+    private static final String OPENAI_API_KEY = "ваш_ключ_доступа_к_OpenAI";
+    private static final String OPENAI_UPLOAD_URL = "https://api.openai.com/v1/files";
+    private static final String OPENAI_FINE_TUNING_URL = "https://api.openai.com/v1/fine-tuning/jobs";
+
+    private final RestTemplate restTemplate;
+
+    public OpenAITuningService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    public String uploadTrainingFile(String filePath) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setBearerAuth(OPENAI_API_KEY);
+
+        FileSystemResource fileResource = new FileSystemResource(filePath);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("file", fileResource);
+        body.put("purpose", "fine-tune");
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                OPENAI_UPLOAD_URL,
+                HttpMethod.POST,
+                requestEntity,
+                Map.class
+        );
+
+        // Получаем ID файла из ответа
+        String fileId = (String) response.getBody().get("id");
+        System.out.println("FileID: " + fileId);
+        return fileId;
+    }
+
+    public void createFineTuningJob(String fileId) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(OPENAI_API_KEY);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", "gpt-3.5-turbo");
+        body.put("training_file", fileId);
+        body.put("suffix", "drone");
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                OPENAI_FINE_TUNING_URL,
+                HttpMethod.POST,
+                requestEntity,
+                Map.class
+        );
+
+        System.out.println("Fine-tuning job created: " + response.getBody());
+    }
+}
+
+
+```
+
+
+{
+    "success": true,
+
+    },
