@@ -1,8 +1,8 @@
 <configuration>
-
-    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="COLOR_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %thread --- [%logger{36}] : %.-110msg%n</pattern>
+            <charset>UTF-8</charset>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %highlight(%-5level) [%thread] %cyan(%logger{36}) : %msg%n%throwable</pattern>
         </encoder>
     </appender>
 
@@ -15,19 +15,21 @@
         </rollingPolicy>
         <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
             <layout class="ch.qos.logback.classic.PatternLayout">
-                <Pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %thread --- [%logger{36}] : %.-110msg%n</Pattern>
+                <Pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %thread --- [%logger{36}] : %msg%n</Pattern>
             </layout>
         </encoder>
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="COLOR_CONSOLE" />
         <appender-ref ref="FILE" />
     </root>
 
     <logger name="org.springframework" level="INFO" />
     <logger name="dev.langchain4j" level="DEBUG" />
     <logger name="dev.ai4j.openai4j" level="DEBUG" />
+    <logger name="org.hibernate.SQL" level="DEBUG">
+        <appender-ref ref="COLOR_CONSOLE" />
+    </logger>
 
 </configuration>
-

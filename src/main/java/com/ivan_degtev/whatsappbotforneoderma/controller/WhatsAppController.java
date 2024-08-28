@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 
 @RestController
@@ -40,12 +41,13 @@ public class WhatsAppController {
      * Нужно в дальнейшей логике корректно фильтровать и не обрабатывать через LLM исходящие сообшения
      */
     @PostMapping("/webhook")
-    public void handleWebhook(
+    public ResponseEntity<String> handleWebhook(
             @RequestHeader Map<String, String> headers,
             @RequestBody String payload
     ) {
         log.info("зашёл в метод чекрез ngrock");
-        chatPushService.getMessageFromWebhook(headers, payload);
+        CompletableFuture.runAsync(() -> chatPushService.getMessageFromWebhook(headers, payload));
+        return ResponseEntity.ok("Сообщение через веб-хук успешно получено!");
     }
 
 }

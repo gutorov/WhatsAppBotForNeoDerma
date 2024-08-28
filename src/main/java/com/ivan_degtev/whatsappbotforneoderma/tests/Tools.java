@@ -139,7 +139,7 @@ public class Tools {
 //                serviceInformation.setServiceId(serviceId);
 //                appointment.setServicesInformation(List.of(serviceInformation));
 //                user.setAppointments(List.of(appointment));
-                userRepository.save(currentUser);
+                userRepository.save(currentUser); //!!!!! не сохраняется
                 jsonLogging.info("Тул getIdService нашёл совпадение по имени услуги и записал в сущность " +
                                 "и сохранил в юзера {}", currentServiceInformation.toString());
                 return serviceId;

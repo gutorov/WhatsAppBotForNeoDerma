@@ -108,7 +108,7 @@ public class AIConfig {
 //                .temperature(0.5)
                 .logRequests(true)
                 .logRequests(true)
-                .timeout(Duration.ofSeconds(30))
+//                .timeout(Duration.ofSeconds(30))
                 .build();
     }
 
