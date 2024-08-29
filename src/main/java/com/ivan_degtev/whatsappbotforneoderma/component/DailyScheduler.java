@@ -7,18 +7,16 @@ import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
-import com.ivan_degtev.whatsappbotforneoderma.service.ai.FineTuning;
+import com.ivan_degtev.whatsappbotforneoderma.service.ai.FineTuningService;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 
 @Component
 @Slf4j
@@ -32,7 +30,7 @@ public class DailyScheduler {
     private final JsonLoggingService jsonLogging;
 
     private AIConfig aiConfig;
-    private final FineTuning fineTuning;
+    private final FineTuningService fineTuningService;
 
     DailyScheduler(
             YClientController yClientController,
@@ -41,7 +39,7 @@ public class DailyScheduler {
             ApplicationEventPublisher eventPublisher,
             JsonLoggingService jsonLogging,
             AIConfig aiConfig,
-            FineTuning fineTuning
+            FineTuningService fineTuningService
     ) {
         this.yClientController = yClientController;
         this.employeeMapper = employeeMapper;
@@ -49,7 +47,7 @@ public class DailyScheduler {
         this.eventPublisher = eventPublisher;
         this.jsonLogging = jsonLogging;
         this.aiConfig = aiConfig;
-        this.fineTuning = fineTuning;
+        this.fineTuningService = fineTuningService;
     }
 
     private List<EmployeeDTO> employeeDTOList;

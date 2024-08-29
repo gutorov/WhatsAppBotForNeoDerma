@@ -1,15 +1,12 @@
 package com.ivan_degtev.whatsappbotforneoderma.controller;
 
-import com.ivan_degtev.whatsappbotforneoderma.service.ai.FineTuning;
-import dev.langchain4j.data.message.ChatMessage;
+import com.ivan_degtev.whatsappbotforneoderma.service.ai.FineTuningService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,20 +15,20 @@ import java.util.Map;
 @RequestMapping(path = "/llm")
 public class FineTuningController {
 
-    private final FineTuning fineTuning;
-    private static final String filePath = "testTuning2.jsonl";
+    private final FineTuningService fineTuningService;
+    private static final String filePath = "src/main/resources/assistant-training.jsonl";
 
 
     @PostMapping(path = "/upload_training_file")
     public ResponseEntity<String> uploadTrainingFile() {
-        String  fileIdForTuningCustomModel = fineTuning.uploadTrainingFile(filePath);
+        String  fileIdForTuningCustomModel = fineTuningService.uploadTrainingFile(filePath);
         return ResponseEntity.ok("Создание файла на опен аи для дальнейшей настройки с id " + fileIdForTuningCustomModel);
     }
 
     @PostMapping(path = "/create_fine_tuning_job")
     public ResponseEntity<?> createFineTuningJob(@RequestParam String fileId) {
         try {
-            ResponseEntity<Map> response = fineTuning.createFineTuningJob(fileId);
+            ResponseEntity<Map> response = fineTuningService.createFineTuningJob(fileId);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok().body(response.getBody());
@@ -47,7 +44,7 @@ public class FineTuningController {
     @GetMapping(path = "/get_status_fine_tuning_job")
     public ResponseEntity<?> getStatusFineTuningJob(@RequestParam String fineTuningJobId) {
         try {
-            ResponseEntity<Map> response = fineTuning.getStatusFineTuningJob(fineTuningJobId);
+            ResponseEntity<Map> response = fineTuningService.getStatusFineTuningJob(fineTuningJobId);
             if (response.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok().body(response.getBody());
             } else {

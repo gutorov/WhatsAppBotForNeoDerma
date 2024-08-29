@@ -25,7 +25,7 @@ import org.springframework.web.client.HttpServerErrorException;
 
 @Service
 @Slf4j
-public class FineTuning {
+public class FineTuningService {
 
     @Value("${open.ai.token}")
     private String openAiApiKey;
@@ -36,7 +36,7 @@ public class FineTuning {
     private static final String OPENAI_FINE_TUNING_URL = "https://api.openai.com/v1/fine_tuning/jobs";
 
 
-    public FineTuning(
+    public FineTuningService(
             @Value("${open.ai.token}") String openAiApiKey,
             RestTemplate restTemplate,
             JsonLoggingService jsonLogging
