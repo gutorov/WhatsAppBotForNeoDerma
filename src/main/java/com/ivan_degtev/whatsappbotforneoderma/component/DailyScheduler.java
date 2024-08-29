@@ -7,16 +7,18 @@ import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
-import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
+import com.ivan_degtev.whatsappbotforneoderma.service.ai.FineTuning;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -30,6 +32,7 @@ public class DailyScheduler {
     private final JsonLoggingService jsonLogging;
 
     private AIConfig aiConfig;
+    private final FineTuning fineTuning;
 
     DailyScheduler(
             YClientController yClientController,
@@ -37,7 +40,8 @@ public class DailyScheduler {
             ServiceMapper serviceMapper,
             ApplicationEventPublisher eventPublisher,
             JsonLoggingService jsonLogging,
-            AIConfig aiConfig
+            AIConfig aiConfig,
+            FineTuning fineTuning
     ) {
         this.yClientController = yClientController;
         this.employeeMapper = employeeMapper;
@@ -45,6 +49,7 @@ public class DailyScheduler {
         this.eventPublisher = eventPublisher;
         this.jsonLogging = jsonLogging;
         this.aiConfig = aiConfig;
+        this.fineTuning = fineTuning;
     }
 
     private List<EmployeeDTO> employeeDTOList;
@@ -71,8 +76,13 @@ public class DailyScheduler {
             jsonLogging.info("Services Data конвертированный лист с ДТО с данными об услугах: {}",
                     serviceInformationDTOList);
         }, error -> jsonLogging.error("Failed to fetch services data: {}", error.getMessage()));
-        updateAssistant();
+//        updateAssistant();
 
+        //тестовый обуч нашей модели
+//        String filePath = "testTuning2.jsonl";
+//        String fileIdForTuningCustomModel = fineTuning.uploadTrainingFile(filePath);
+//        ResponseEntity<Map> responseFromTuningModel = fineTuning.createFineTuningJob(fileIdForTuningCustomModel);
+//        jsonLogging.info("Ответ в шедлере по созданию кастомной модели {}", responseFromTuningModel);
     }
 
     @PostConstruct
@@ -80,9 +90,9 @@ public class DailyScheduler {
         scheduleDailyTasks();
     }
 
-    private void updateAssistant() {
-        aiConfig.assistantTest();
-        log.info("Assistant configuration updated with new data.");
-    }
+//    private void updateAssistant() {
+//        aiConfig.assistantTest();
+//        log.info("Assistant configuration updated with new data.");
+//    }
 }
 
