@@ -109,7 +109,6 @@ public class Tools {
             Исходя из запроса клиента - выведи общую информацию об услуге, которая ему нужна или предложи варианты 
             похожих услуг. Выводи всегда случайно выбранные услуги из этого листа.
             """)
-    //внутренний id услуги
     public List<ServiceInformationDTO> getAllServices(
             @P("Вопрос клиента с упоминанием нужной ему услуги") String question
     ) {
@@ -198,7 +197,6 @@ public class Tools {
             Передай сюда id выбранного сотрудника: {{staffId}} и id чата клиента: {{currentChatId}}.
             """)
     @Transactional
-    //Пойми из контекста твёрдость решения пользователя.
     public void confirmationOfEmployeeSelection(
             @P("ID сотрудника, которого выбрал клиент") String staffId,
             @P("ID текущего чата")String currentChatId
@@ -208,7 +206,6 @@ public class Tools {
         if (staffId != null && !staffId.isEmpty()) {
             User currentUser = userRepository.findUserByChatId(currentChatId)
                     .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
-            // Поиск актуального объекта Appointment для текущей сессии
             Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(
                     currentUser,
                     currentChatId
@@ -283,12 +280,11 @@ public class Tools {
     @Tool("""
             Если клиент точно выбрал и подтвердил на какую дату и время ему необходима запись.
             Ранее он выбрал сотрудника и услугу и ты использовал внутренние инструменты для сохранения этих данных!
-            Передай в метод эту дату и время: {{dateTime}} в формате iso8601, данные о доступных датах: {{availableSessionDTOS}}
-            и chatId клиента: {{currentChatId}}
+            Передай в метод эту дату и время: {{dateTime}} в формате iso8601 и chatId клиента: {{currentChatId}}
             """)
     //Дата и время, указанные клиентом совпадают с информацией о доступных датах {{availableSessionDTOS}},
     // которую ты получал ранее.
-    // Пойми из контекста твёрдость решения пользователя.
+    // Пойми из контекста твёрдость решения пользователя. данные о доступных датах: {{availableSessionDTOS}}
     @Transactional
     public void confirmationOfDateSelection(
             @P("Дата и время в полном формате, на которые записывается клиент") String dateTime,
