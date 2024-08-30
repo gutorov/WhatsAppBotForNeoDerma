@@ -126,7 +126,8 @@ public class AIConfig {
     public ChatLanguageModel chatLanguageModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openAiToken)
-                .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
+//                .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
+                .modelName("ft:gpt-3.5-turbo-0125:zorinov-ai:neo-derma-v-1:A1sqM4xE")
                 .logRequests(true)
                 .logRequests(true)
                 .build();

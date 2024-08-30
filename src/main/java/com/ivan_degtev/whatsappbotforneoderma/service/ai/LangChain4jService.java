@@ -226,7 +226,7 @@ public class LangChain4jService {
             }
             String currentChatId = currentUser.getChatId();
 
-            String answer = assistantTest.chat(currentChatId, question, currentChatId);
+            String answer = assistantTest.chat("111", question, "111");
             log.info("Ответ от тест чата, сканер: {}", answer);
         }
         log.info("Сканнер закрыт!");

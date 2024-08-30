@@ -76,11 +76,6 @@ public class DailyScheduler {
         }, error -> jsonLogging.error("Failed to fetch services data: {}", error.getMessage()));
 //        updateAssistant();
 
-        //тестовый обуч нашей модели
-//        String filePath = "testTuning2.jsonl";
-//        String fileIdForTuningCustomModel = fineTuning.uploadTrainingFile(filePath);
-//        ResponseEntity<Map> responseFromTuningModel = fineTuning.createFineTuningJob(fileIdForTuningCustomModel);
-//        jsonLogging.info("Ответ в шедлере по созданию кастомной модели {}", responseFromTuningModel);
     }
 
     @PostConstruct

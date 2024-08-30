@@ -96,7 +96,7 @@ public class FineTuningService {
         Map<String, Object> body = new HashMap<>();
         body.put("model", "gpt-3.5-turbo");
         body.put("training_file", fileId);
-        body.put("suffix", "testTuning");
+        body.put("suffix", "neo-derma-v.1");
 
         HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
