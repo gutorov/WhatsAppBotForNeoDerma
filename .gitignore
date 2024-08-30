@@ -17,6 +17,9 @@ logs/
 ### IntelliJ IDEA ###
 .idea
 .references
+.dataForFineTuning.txt
+.dataForFineTuning.json
+!**/src/main/resources/assistant-training.jsonl
 *.iws
 *.iml
 *.ipr

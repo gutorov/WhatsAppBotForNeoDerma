@@ -1,0 +1,167 @@
+{
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "getFreeDates",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string"
+            }
+          },
+          "required": ["question"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "getAllServices",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string"
+            }
+          },
+          "required": ["question"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "getIdService",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "serviceName": {
+              "type": "string"
+            },
+            "currentChatId": {
+              "type": "string"
+            }
+          },
+          "required": ["serviceName", "currentChatId"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "getListEmployeesForCurrentServices",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "serviceId": {
+              "type": "string"
+            }
+          },
+          "required": ["serviceId"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "confirmationOfEmployeeSelection",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "staffId": {
+              "type": "string"
+            },
+            "currentChatId": {
+              "type": "string"
+            }
+          },
+          "required": ["staffId", "currentChatId"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "getListNearestAvailableSessions",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "serviceId": {
+              "type": "string"
+            },
+            "staffId": {
+              "type": "string"
+            }
+          },
+          "required": ["serviceId", "staffId"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "getListNearestAvailableSessionsForSpecificDate",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string"
+            },
+            "serviceId": {
+              "type": "string"
+            },
+            "staffId": {
+              "type": "string"
+            }
+          },
+          "required": ["date", "serviceId", "staffId"]
+        }
+      }
+    },
+
+    {
+      "type": "function",
+      "function": {
+        "name": "confirmationOfDateSelection",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "dateTime": {
+              "type": "string"
+            },
+            "currentChatId": {
+              "type": "string"
+            }
+          },
+          "required": ["dateTime", "currentChatId"]
+        }
+      }
+    },
+
+
+    {
+      "type": "function",
+      "function": {
+        "name": "finalPartDialog",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "currentChatId": {
+              "type": "string"
+            }
+          },
+          "required": ["currentChatId"]
+        }
+      }
+    }
+  ]
+
+}
