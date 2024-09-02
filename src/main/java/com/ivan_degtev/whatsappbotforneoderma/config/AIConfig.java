@@ -159,8 +159,7 @@ public class AIConfig {
         var contentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore())
                 .embeddingModel(embeddingModel())
-                .maxResults(10) // Увеличиваем количество возвращаемых документов (по умолчанию часто 5)
-//                .minScore(0.75) // Устанавливаем минимальный порог схожести для возвращаемых документов
+                .maxResults(15)
                 .build();
 
         var contentInjector = DefaultContentInjector.builder()
@@ -175,7 +174,7 @@ public class AIConfig {
         return AiServices.builder(RAGAssistant.class)
                 .chatLanguageModel(chatLanguageModel())
                 .retrievalAugmentor(retrievalAugmentor)
-                .chatMemoryProvider(chatMemoryProvider())
+                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(10))
                 .build();
     }
 
@@ -258,6 +257,8 @@ public class AIConfig {
                 .chatMemoryStore(persistentChatMemoryStore)
                 .build();
     }
+
+    @Lazy
     @Bean
     public AssistantTest assistantTest() {
         /*
@@ -282,6 +283,7 @@ public class AIConfig {
                         serviceInformationRepository,
                         appointmentsRepository,
                         userRepository,
+                        ragAssistant(),
                         jsonLogging
                 ))
                 .build();

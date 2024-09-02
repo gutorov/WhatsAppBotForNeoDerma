@@ -37,17 +37,17 @@ public class EmbeddingComponent {
     private final JsonLoggingService jsonLogging;
 
     public void loadCompanyDocuments() {
-        String employees = yClientService.getListEmployeesAvailableForBooking(null, null).block();
+//        String employees = yClientService.getListEmployeesAvailableForBooking(null, null).block();
         String services = yClientService.getListServicesAvailableForBooking(null, null, null).block();
 
-        List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(employees);
+//        List<EmployeeDTO> employeeDTOList = employeeMapper.mapJsonToEmployeeList(employees);
         List<ServiceInformationDTO> serviceDTOList = serviceMapper.mapJsonToServiceList(services);
 
         // Конвертируем данные в документы
-        List<Document> documentsByEmployee = employeeDTOList
-                .stream()
-                .map(emp -> new Document(emp.toString()))
-                .collect(Collectors.toList());
+//        List<Document> documentsByEmployee = employeeDTOList
+//                .stream()
+//                .map(emp -> new Document(emp.toString()))
+//                .collect(Collectors.toList());
         List<Document> documentsByServices = serviceDTOList
                 .stream()
                 .map(serv -> new Document(serv.toString()))
@@ -61,7 +61,7 @@ public class EmbeddingComponent {
                 .embeddingStore(embeddingStore)
                 .build();
 
-        documentsByEmployee.forEach(embeddingStoreIngestor::ingest);
+//        documentsByEmployee.forEach(embeddingStoreIngestor::ingest);
         documentsByServices.forEach(embeddingStoreIngestor::ingest);
 
     }

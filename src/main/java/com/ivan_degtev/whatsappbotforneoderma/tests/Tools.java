@@ -1,5 +1,6 @@
 package com.ivan_degtev.whatsappbotforneoderma.tests;
 
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.RAGAssistant;
 import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.AvailableSessionDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
@@ -49,23 +50,15 @@ public class Tools {
     private final NearestAvailableSessionMapper nearestAvailableSessionMapper;
     private final AnswerCheckMapper answerCheckMapper;
 
-    private final WebClient webClient = WebClient.builder().build();
     private final ServiceInformationRepository serviceInformationRepository;
     private final AppointmentsRepository appointmentsRepository;
     private final UserRepository userRepository;
 
+    private final RAGAssistant ragAssistant;
+
     private final JsonLoggingService jsonLogging;
 
-    @PersistenceContext
-    private EntityManager entityManager;
 
-//    private User user;
-//    private Appointment appointment;
-//    private ServiceInformation serviceInformation;
-
-//    private static final String yclientToken = System.getenv("yclient.token");
-//    private static final Long companyId = 316398L;
-//    private  static List<ServiceInformationDTO> servicesInformationDTOList;
 
     public Tools(
             YClientServiceImpl yClientService,
@@ -76,6 +69,7 @@ public class Tools {
             ServiceInformationRepository serviceInformationRepository,
             AppointmentsRepository appointmentsRepository,
             UserRepository userRepository,
+            RAGAssistant ragAssistant,
             JsonLoggingService jsonLogging
     ) {
         log.info("Создаем Tools с инжектированными зависимостями");
@@ -88,6 +82,7 @@ public class Tools {
         this.serviceInformationRepository = serviceInformationRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.userRepository = userRepository;
+        this.ragAssistant = ragAssistant;
         this.jsonLogging = jsonLogging;
     }
 
@@ -104,13 +99,13 @@ public class Tools {
 //    }
 
     @Tool("""
-            Клиент назвал или упоминул свою имя в контексте. Тебе нужно выделить это имя из контекста разговора
+            Клиент назвал или упоминул своё имя в контексте. Тебе нужно выделить это имя из контекста разговора
             и передать в метод имя клиента: {{userName}} и его currentChatId: {{currentChatId}}
             """)
     @Transactional
     public void saveUserName(
 //            @P("Общий контекст или вопрос клиента с упоминанием его имени")String context,
-            @P("Выделенное имя клиента")String userName,
+            @P("Имя клиента")String userName,
             @P("ID текущего чата")String currentChatId
     ) {
         if (userName == null) {
@@ -122,18 +117,36 @@ public class Tools {
 
         userRepository.save(currentUser);
     }
+
+
+//    @Tool("""
+//            Извлечение информации об услуге на основе данных, переданных из RAG.
+//            Если пользователь хочет узнать какие услуги мы оказываем  - выведи ему полученные из RAG данные,
+//            если пользователь интересуется узко-направленной услугой - покажи ему наиболее близкие услуги, которые ты получил из RAG
+//            """)
+
     @Tool("""
-            Получить List со всеми услугами, в этом листе есть базовая информация - названия услуг и их внутренний id
+            Передай сюда запрос клиента {{question}} и chat Id {{currentChatId}}.
+            Получить строку со всеми услугами, в этой строке есть базовая информация - названия услуг, цена и их внутренний id
             для дальнейшего поиска.
-            Исходя из запроса клиента - выведи общую информацию об услуге, которая ему нужна или предложи варианты 
-            похожих услуг. Выводи всегда случайно выбранные услуги из этого листа.
+            Исходя из запроса клиента - выведи общую информацию об услуге, которая ему нужна или предложи клиенту все варианты услуг в красивом виде с ценами.
             """)
-    public List<ServiceInformationDTO> getAllServices(
-            @P("Вопрос клиента с упоминанием нужной ему услуги") String question
+    public String getAllServices(
+//            @P("Список услуг, переданных из RAG") List<ServiceInformationDTO> ragData
+            @P("Вопрос клиента с упоминанием нужной ему услуги") String question,
+            @P("Текущий id чата") String currentChatId
     ) {
-        List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
-        jsonLogging.info("Тул getAllServices вывел все услуги {}", serviceInformationList);
-        return serviceInformationList;
+//        List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
+//        jsonLogging.info("Тул getAllServices вывел все услуги {}", serviceInformationList);
+//        return serviceInformationList;
+        try {
+            String response = ragAssistant.chat(currentChatId, question);
+            return response;
+        } catch (Exception e) {
+            // Логируйте ошибку и обработайте ее, чтобы ассистент мог верно ответить
+            jsonLogging.error("Ошибка при вызове ragAssistant: {}", e.getMessage());
+            return "{\"error\":\"Ошибка при вызове ragAssistant\", \"details\":\"" + e.getMessage() + "\"}";
+        }
     }
 
     @Tool("""
@@ -185,7 +198,7 @@ public class Tools {
 
     @Tool("""
             Дать информацию клиенту обо всех доступных для бронирования сотрудниках.
-            Если клиент указал название услуги - передай ее id в: {{serviceId}}
+            Если клиент указал название услуги - передай id этой услуги в: {{serviceId}}
             Если клиент назвал какое-то имя сотрудника ранее - сравни данные из полученного в результате листа с именем,
             которое он назвал и ответь, есть ли указанный сотрудник в списке бронирования.
             """)

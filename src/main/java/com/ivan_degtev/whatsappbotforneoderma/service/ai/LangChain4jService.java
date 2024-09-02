@@ -228,9 +228,9 @@ public class LangChain4jService {
             }
             String currentChatId = currentUser.getChatId();
 
-//            String answer = assistantTest.chat("111", question, "111");
-            String LLM_withRAG_answer = ragAssistant.chat(currentChatId, question, currentChatId);
-            log.info("Ответ от тест чата, сканер: {}", LLM_withRAG_answer);
+            String answer = assistantTest.chat("111", question, "111");
+//            String LLM_withRAG_answer = ragAssistant.chat(currentChatId, question, currentChatId);
+            log.info("Ответ от тест чата, сканер: {}", answer);
         }
         log.info("Сканнер закрыт!");
     }
