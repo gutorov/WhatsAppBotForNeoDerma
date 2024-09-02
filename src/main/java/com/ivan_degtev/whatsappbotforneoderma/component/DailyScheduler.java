@@ -60,20 +60,20 @@ public class DailyScheduler {
      */
     @Scheduled(cron = "0 0 0 * * *")
     public void scheduleDailyTasks() {
-        log.info("DailyScheduler started");
+//        log.info("DailyScheduler started");
 
-        Mono<String> staffMono = yClientController.getListEmployeesAvailableForBooking(null, null);
-        staffMono.subscribe(response -> {
-            employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
-            jsonLogging.info("Staff Data - конвертированный лист с ДТО с данными о работниках: {}", employeeDTOList);
-        }, error -> jsonLogging.error("Failed to fetch staff data: {}", error.getMessage()));
-
-        Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking(null, null, null);
-        servicesMono.subscribe(response -> {
-            serviceInformationDTOList = serviceMapper.mapJsonToServiceList(response);
-            jsonLogging.info("Services Data конвертированный лист с ДТО с данными об услугах: {}",
-                    serviceInformationDTOList);
-        }, error -> jsonLogging.error("Failed to fetch services data: {}", error.getMessage()));
+//        Mono<String> staffMono = yClientController.getListEmployeesAvailableForBooking(null, null);
+//        staffMono.subscribe(response -> {
+//            employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
+//            jsonLogging.info("Staff Data - конвертированный лист с ДТО с данными о работниках: {}", employeeDTOList);
+//        }, error -> jsonLogging.error("Failed to fetch staff data: {}", error.getMessage()));
+//
+//        Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking(null, null, null);
+//        servicesMono.subscribe(response -> {
+//            serviceInformationDTOList = serviceMapper.mapJsonToServiceList(response);
+//            jsonLogging.info("Services Data конвертированный лист с ДТО с данными об услугах: {}",
+//                    serviceInformationDTOList);
+//        }, error -> jsonLogging.error("Failed to fetch services data: {}", error.getMessage()));
 //        updateAssistant();
 
     }

@@ -1,12 +1,12 @@
 package com.ivan_degtev.whatsappbotforneoderma.service.ai;
 
 import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.QuestionAnalyzer;
-import com.ivan_degtev.whatsappbotforneoderma.controller.LLMMemoryController;
-import com.ivan_degtev.whatsappbotforneoderma.controller.WhatsAppSendController;
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.RAGAssistant;
+import com.ivan_degtev.whatsappbotforneoderma.controller.llm.LLMMemoryController;
+import com.ivan_degtev.whatsappbotforneoderma.controller.whatsapp.WhatsAppSendController;
 import com.ivan_degtev.whatsappbotforneoderma.model.Message;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientSendServiceImpl;
@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.Disposable;
 
 import java.util.*;
 
@@ -30,6 +29,7 @@ public class LangChain4jService {
     private String openAiToken;
     private final AssistantTest assistantTest;
     private final QuestionAnalyzer questionAnalyzer;
+    private final RAGAssistant ragAssistant;
     private final UserRepository userRepository;
     private final AppointmentsRepository appointmentsRepository;
     private final WhatsAppSendController whatsAppSendController;
@@ -42,6 +42,7 @@ public class LangChain4jService {
             @Value("${open.ai.token}") String openAiToken,
             AssistantTest assistantTest,
             QuestionAnalyzer questionAnalyzer,
+            RAGAssistant ragAssistant,
             UserRepository userRepository,
             AppointmentsRepository appointmentsRepository,
             WhatsAppSendController whatsAppSendController,
@@ -52,6 +53,7 @@ public class LangChain4jService {
         this.openAiToken = openAiToken;
         this.assistantTest = assistantTest;
         this.questionAnalyzer = questionAnalyzer;
+        this.ragAssistant = ragAssistant;
         this.userRepository = userRepository;
         this.appointmentsRepository = appointmentsRepository;
         this.whatsAppSendController = whatsAppSendController;
@@ -226,31 +228,11 @@ public class LangChain4jService {
             }
             String currentChatId = currentUser.getChatId();
 
-            String answer = assistantTest.chat("111", question, "111");
-            log.info("Ответ от тест чата, сканер: {}", answer);
+//            String answer = assistantTest.chat("111", question, "111");
+            String LLM_withRAG_answer = ragAssistant.chat(currentChatId, question, currentChatId);
+            log.info("Ответ от тест чата, сканер: {}", LLM_withRAG_answer);
         }
         log.info("Сканнер закрыт!");
     }
-
-    public void testSendMessage() {
-        Scanner scanner = new Scanner(System.in);
-        String currentUserPhone = "79951489346";
-
-        while (true) {
-            String question = scanner.nextLine();
-
-            if (question.equals("exit")) {
-                log.info("тестовый сканер закрыт!");
-                break;
-            }
-
-            var answerFromSendMessage = whatsAppSendController.sendMessage(question, currentUserPhone).block();
-            jsonLogging.info("Отправил сообщение из тестового метода в чатпуш сервис - в сообщению юзеру, " +
-                    "ответ от метода отправки {}", answerFromSendMessage);
-        }
-
-    }
-
-
 }
 

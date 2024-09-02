@@ -91,18 +91,37 @@ public class Tools {
         this.jsonLogging = jsonLogging;
     }
 
-    @Tool("""
-            Получить свободные даты для записи и вывести в человекочитаемом формате. Если дат очень много
-            вывести результат в формате "свободны от - и до - "
-            """)
-    public String getFreeDates(
-            @P("Вопрос клиента") String question
-    ) {
-        String freeDates = yClientService.getListDatesAvailableForBooking(null).block();
-        jsonLogging.info("Тул getFreeDates нашёл свободные даты {}", freeDates);
-        return freeDates;
-    }
+//    @Tool("""
+//            Получить свободные даты для записи и вывести в человекочитаемом формате. Если дат очень много
+//            вывести результат в формате "свободны от - и до - "
+//            """)
+//    public String getFreeDates(
+//            @P("Вопрос клиента") String question
+//    ) {
+//        String freeDates = yClientService.getListDatesAvailableForBooking(null).block();
+//        jsonLogging.info("Тул getFreeDates нашёл свободные даты {}", freeDates);
+//        return freeDates;
+//    }
 
+    @Tool("""
+            Клиент назвал или упоминул свою имя в контексте. Тебе нужно выделить это имя из контекста разговора
+            и передать в метод имя клиента: {{userName}} и его currentChatId: {{currentChatId}}
+            """)
+    @Transactional
+    public void saveUserName(
+//            @P("Общий контекст или вопрос клиента с упоминанием его имени")String context,
+            @P("Выделенное имя клиента")String userName,
+            @P("ID текущего чата")String currentChatId
+    ) {
+        if (userName == null) {
+            throw new NoParameterException("В тул не передано имя клиента для сохранения");
+        }
+        User currentUser = userRepository.findUserByChatId(currentChatId)
+                .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
+        currentUser.setSenderName(userName);
+
+        userRepository.save(currentUser);
+    }
     @Tool("""
             Получить List со всеми услугами, в этом листе есть базовая информация - названия услуг и их внутренний id
             для дальнейшего поиска.
@@ -340,6 +359,9 @@ public class Tools {
         // ВАЖНО! После рефа, когда будем создавать записи на неск. услугу - переделать проверки
         ServiceInformation currentServiceInformation = serviceInformationRepository
                 .findAllByAppointment(actualAppointment).get(0);
+        if(currentUser.getSenderName() == null) {
+            throw new NoParameterException("В сущности user не сохранено имя клиента");
+        }
         if (actualAppointment.getDatetime() == null) {
             throw new NoParameterException("В сущности appointment не сохранена дата и время записи на приём");
         }

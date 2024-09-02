@@ -19,7 +19,7 @@ logs/
 .references
 .dataForFineTuning.txt
 .dataForFineTuning.json
-!**/src/main/resources/assistant-training.jsonl
+/src/main/resources/assistant-training.jsonl
 *.iws
 *.iml
 *.ipr

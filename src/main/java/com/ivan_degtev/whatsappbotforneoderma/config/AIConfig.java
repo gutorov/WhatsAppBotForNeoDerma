@@ -3,6 +3,7 @@ package com.ivan_degtev.whatsappbotforneoderma.config;
 import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.AIAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.Assistant;
 import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.QuestionAnalyzer;
+import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.RAGAssistant;
 import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
 import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
@@ -33,6 +34,11 @@ import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.data.document.Document;
 
 
+import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
+import dev.langchain4j.model.openai.OpenAiEmbeddingModelName;
+import dev.langchain4j.rag.DefaultRetrievalAugmentor;
+import dev.langchain4j.rag.RetrievalAugmentor;
+import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
@@ -50,6 +56,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 
 @Configuration
@@ -126,13 +134,50 @@ public class AIConfig {
     public ChatLanguageModel chatLanguageModel() {
         return OpenAiChatModel.builder()
                 .apiKey(openAiToken)
-//                .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
-                .modelName("ft:gpt-3.5-turbo-0125:zorinov-ai:neo-derma-v-1:A1sqM4xE")
+                .modelName(OpenAiChatModelName.GPT_3_5_TURBO)
+//                .modelName("ft:gpt-3.5-turbo-0125:zorinov-ai:neo-derma-v-1:A1sqM4xE")
+//                .modelName("ft:gpt-3.5-turbo-0125:zorinov-ai:neo-derma-v-1:A1yMrRYU")
                 .logRequests(true)
                 .logRequests(true)
                 .build();
     }
 
+    @Bean
+    public EmbeddingModel embeddingModel() {
+        return OpenAiEmbeddingModel.builder()
+                .apiKey(openAiToken)
+                .modelName(OpenAiEmbeddingModelName.TEXT_EMBEDDING_3_LARGE)
+                .build();
+    }
+    @Bean
+    public EmbeddingStore<TextSegment> embeddingStore() {
+        return new InMemoryEmbeddingStore<>();
+    }
+
+    @Bean
+    public RAGAssistant ragAssistant() {
+        var contentRetriever = EmbeddingStoreContentRetriever.builder()
+                .embeddingStore(embeddingStore())
+                .embeddingModel(embeddingModel())
+                .maxResults(10) // Увеличиваем количество возвращаемых документов (по умолчанию часто 5)
+//                .minScore(0.75) // Устанавливаем минимальный порог схожести для возвращаемых документов
+                .build();
+
+        var contentInjector = DefaultContentInjector.builder()
+                .metadataKeysToInclude(asList("file_name", "index"))
+                .build();
+
+        RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
+                .contentRetriever(contentRetriever)
+                .contentInjector(contentInjector)
+                .build();
+
+        return AiServices.builder(RAGAssistant.class)
+                .chatLanguageModel(chatLanguageModel())
+                .retrievalAugmentor(retrievalAugmentor)
+                .chatMemoryProvider(chatMemoryProvider())
+                .build();
+    }
 
 
 //    @Bean
@@ -206,20 +251,28 @@ public class AIConfig {
 //    }
     //тест
     @Bean
-    public AssistantTest assistantTest() {
-        /*
-          Создание объекта постоянной памяти на основе компонента - внутреннего хранилица памяти PersistentChatMemoryStore
-         */
-        ChatMemoryProvider chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder()
+    public ChatMemoryProvider chatMemoryProvider() {
+        return memoryId -> MessageWindowChatMemory.builder()
                 .id(memoryId)
                 .maxMessages(100)
                 .chatMemoryStore(persistentChatMemoryStore)
                 .build();
+    }
+    @Bean
+    public AssistantTest assistantTest() {
+        /*
+          Создание объекта постоянной памяти на основе компонента - внутреннего хранилица памяти PersistentChatMemoryStore
+         */
+//        ChatMemoryProvider chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder()
+//                .id(memoryId)
+//                .maxMessages(100)
+//                .chatMemoryStore(persistentChatMemoryStore)
+//                .build();
 
         return AiServices.builder(AssistantTest.class)
                 .chatLanguageModel(chatLanguageModel())
 //                .chatMemoryProvider(memoryId -> MessageWindowChatMemory.withMaxMessages(20))
-                .chatMemoryProvider(chatMemoryProvider)
+                .chatMemoryProvider(chatMemoryProvider())
                 .tools(new Tools(
                         yClientService,
                         serviceMapper,

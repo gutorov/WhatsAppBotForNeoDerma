@@ -12,4 +12,9 @@ public class ServiceInformationDTO {
     @JsonProperty("service_id")
     private String serviceId;
     private String title;
+    @JsonProperty("price_min")
+    private String priceMin;
+    @JsonProperty("price_max")
+    private String priceMax;
+
 }

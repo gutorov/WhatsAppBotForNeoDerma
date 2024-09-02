@@ -42,6 +42,8 @@ public class ServiceMapper {
         ServiceInformationDTO serviceInformationDTO = new ServiceInformationDTO();
         serviceInformationDTO.setServiceId(node.path("id").asText());
         serviceInformationDTO.setTitle(node.path("title").asText());
+        serviceInformationDTO.setPriceMin(node.path("price_min").asText());
+        serviceInformationDTO.setPriceMax(node.path("price_max").asText());
 
         return serviceInformationDTO;
     }
