@@ -50,7 +50,7 @@ public class DailyScheduler {
         this.fineTuningService = fineTuningService;
     }
 
-    private List<EmployeeDTO> employeeDTOList;
+    public List<EmployeeDTO> employeeDTOList;
     private List<ServiceInformationDTO> serviceInformationDTOList;
 
     /**
@@ -62,11 +62,11 @@ public class DailyScheduler {
     public void scheduleDailyTasks() {
 //        log.info("DailyScheduler started");
 
-//        Mono<String> staffMono = yClientController.getListEmployeesAvailableForBooking(null, null);
-//        staffMono.subscribe(response -> {
-//            employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
-//            jsonLogging.info("Staff Data - конвертированный лист с ДТО с данными о работниках: {}", employeeDTOList);
-//        }, error -> jsonLogging.error("Failed to fetch staff data: {}", error.getMessage()));
+        Mono<String> staffMono = yClientController.getListEmployeesAvailableForBooking(null, null);
+        staffMono.subscribe(response -> {
+            employeeDTOList = employeeMapper.mapJsonToEmployeeList(response);
+            jsonLogging.info("Staff Data - конвертированный лист с ДТО с данными о работниках: {}", employeeDTOList);
+        }, error -> jsonLogging.error("Failed to fetch staff data: {}", error.getMessage()));
 //
 //        Mono<String> servicesMono = yClientController.getListServicesAvailableForBooking(null, null, null);
 //        servicesMono.subscribe(response -> {

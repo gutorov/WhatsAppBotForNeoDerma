@@ -20,6 +20,17 @@ public class ServiceInformation {
     public ServiceInformation(String serviceId) {
         this.serviceId = serviceId;
     }
+    public ServiceInformation(String serviceId, String title) {
+        this.serviceId = serviceId;
+        this.title = title;
+    }
+    public ServiceInformation(String serviceId, String title, String priceMin, String priceMax) {
+        this.serviceId = serviceId;
+        this.title = title;
+        this.priceMin = priceMin;
+        this.priceMax = priceMax;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -29,7 +40,11 @@ public class ServiceInformation {
 
     private String title;
 
-//    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
+    @JsonProperty("price_min")
+    private String priceMin;
+
+    @JsonProperty("price_max")
+    private String priceMax;
 
     @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE }, fetch = FetchType.EAGER)
     private Appointment appointment;

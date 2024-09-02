@@ -174,10 +174,12 @@ public class Tools {
                         currentUser,
                         currentChatId
                 );
+                String priceMin = service.getPriceMin();
+                String priceMax = service.getPriceMax();
                 ArrayList<ServiceInformation> serviceInfoList = new ArrayList<>();
                 ArrayList<Appointment> appointmentList = new ArrayList<>();
 
-                ServiceInformation currentServiceInformation = new ServiceInformation(serviceId);
+                ServiceInformation currentServiceInformation = new ServiceInformation(serviceId, serviceName, priceMin, priceMax);
                 serviceInfoList.add(currentServiceInformation);
 
                 currentAppointment.setServicesInformation(serviceInfoList);

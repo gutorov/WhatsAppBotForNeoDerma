@@ -1,14 +1,22 @@
 package com.ivan_degtev.whatsappbotforneoderma.service.ai;
 
+import com.ivan_degtev.whatsappbotforneoderma.component.DailyScheduler;
 import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.QuestionAnalyzer;
 import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.RAGAssistant;
+import com.ivan_degtev.whatsappbotforneoderma.controller.AmoCrmController;
 import com.ivan_degtev.whatsappbotforneoderma.controller.llm.LLMMemoryController;
 import com.ivan_degtev.whatsappbotforneoderma.controller.whatsapp.WhatsAppSendController;
+import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.CustomFieldDto;
+import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.LeadDto;
+import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.ValueDto;
+import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
 import com.ivan_degtev.whatsappbotforneoderma.model.Message;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
+import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
+import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientSendServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
@@ -18,6 +26,8 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Service
@@ -25,6 +35,9 @@ import java.util.*;
 @DependsOn("dailyScheduler")
 public class LangChain4jService {
 
+    private final ServiceInformationRepository serviceInformationRepository;
+    private final DailyScheduler dailyScheduler;
+    private final AmoCrmController amoCrmController;
     @Value("${open.ai.token}")
     private String openAiToken;
     private final AssistantTest assistantTest;
@@ -48,8 +61,8 @@ public class LangChain4jService {
             WhatsAppSendController whatsAppSendController,
             LLMMemoryController llmMemoryController,
             YClientSendServiceImpl yClientSendService,
-            JsonLoggingService jsonLogging
-    ) {
+            JsonLoggingService jsonLogging,
+            ServiceInformationRepository serviceInformationRepository, DailyScheduler dailyScheduler, AmoCrmController amoCrmController) {
         this.openAiToken = openAiToken;
         this.assistantTest = assistantTest;
         this.questionAnalyzer = questionAnalyzer;
@@ -60,6 +73,9 @@ public class LangChain4jService {
         this.llmMemoryController = llmMemoryController;
         this.yClientSendService = yClientSendService;
         this.jsonLogging = jsonLogging;
+        this.serviceInformationRepository = serviceInformationRepository;
+        this.dailyScheduler = dailyScheduler;
+        this.amoCrmController = amoCrmController;
     }
 
 
@@ -162,6 +178,40 @@ public class LangChain4jService {
 
     }
 
+    public void createRecordInAmoCrm(String currentChatId, Appointment currentAppointment) {
+        User currentUser = userRepository.findUserByChatId(currentChatId)
+                .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден"));
+        List<ServiceInformation> currentServiceInformation = serviceInformationRepository.findAllByAppointment(currentAppointment);
+
+        LeadDto leadDto = new LeadDto();
+        leadDto.setName(currentServiceInformation.get(0).getTitle());
+        leadDto.setPipelineId(6373406);
+        leadDto.setCreatedBy(0);
+        leadDto.setPrice(Integer.valueOf(currentServiceInformation.get(0).getPriceMax()));
+        leadDto.setStatusId(69559066);
+
+        List<CustomFieldDto> customFields = new ArrayList<>();
+
+        CustomFieldDto nameField = new CustomFieldDto();
+        nameField.setFieldId(1881929);
+        nameField.setValues(List.of(new ValueDto(currentUser.getSenderName())));
+
+        CustomFieldDto phoneField = new CustomFieldDto();
+        phoneField.setFieldId(1881929);
+        phoneField.setValues(List.of(new ValueDto(currentUser.getSenderPhoneNumber())));
+
+        CustomFieldDto dateField = new CustomFieldDto();
+        dateField.setFieldId(1883033);
+        dateField.setValues(List.of(new ValueDto(currentAppointment.getDatetime().toString())));
+
+        customFields.add(nameField);
+        customFields.add(phoneField);
+        customFields.add(dateField);
+
+        leadDto.setCustomFieldsValues(customFields);
+
+        amoCrmController.addLead(leadDto);
+    }
 
     /**
      * Добавляет в appointments флаг по отправке запрос на добавление записи в яклиент.
@@ -229,10 +279,48 @@ public class LangChain4jService {
             String currentChatId = currentUser.getChatId();
 
             String answer = assistantTest.chat("111", question, "111");
-//            String LLM_withRAG_answer = ragAssistant.chat(currentChatId, question, currentChatId);
             log.info("Ответ от тест чата, сканер: {}", answer);
+
+            User checkUser = userRepository.findUserByChatId(currentChatId).get();
+            Appointment currentAppointment = appointmentsRepository.findAppointmentByUser(currentUser);
+
+            if ( currentAppointment != null
+                    && checkUser.getAppointments().get(0).getCompletedBooking() != null
+                    && checkUser.getAppointments().get(0).getCompletedBooking()) {
+                createRecordInAmoCrm(currentChatId, currentAppointment);
+            }
         }
         log.info("Сканнер закрыт!");
     }
+
+//    @Transactional
+    public void testAmo() {
+        User currentUser = new User();
+        currentUser.setChatId("111");
+        currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
+        userRepository.save(currentUser);
+
+        ServiceInformation serviceInformation = new ServiceInformation();
+        serviceInformation.setServiceId("123456");
+        serviceInformation = serviceInformationRepository.save(serviceInformation);
+
+        Appointment currentAppointment = new Appointment();
+        currentAppointment.setStaffId("123456");
+        OffsetDateTime appointmentDateTime = OffsetDateTime.of(2024, 9, 11, 7, 0, 0, 0, ZoneOffset.UTC);
+        currentAppointment.setDatetime(appointmentDateTime);
+
+        List<ServiceInformation> serviceInformationList = new ArrayList<>();
+        serviceInformationList.add(serviceInformation);
+        currentAppointment.setServicesInformation(serviceInformationList);
+
+        List<Appointment> appointmentList = new ArrayList<>();
+        appointmentList.add(currentAppointment);
+        currentUser.setAppointments(appointmentList);
+
+        userRepository.save(currentUser);
+
+        createRecordInAmoCrm("111", currentAppointment);
+    }
+
 }
 
