@@ -38,6 +38,9 @@ public class User implements BaseEntity {
     @JsonProperty("sender_phone_number")
     private String senderPhoneNumber;
 
+    //поле требуется только для создания брони в Yclient
+    @Column(unique = true)
+    private String email;
     /**
      * Поле нужно для сохранения состояния текущей сессии по актуальной записи для связывания
      * с текущим актуальным appointment, необходима именно в Tools LLM

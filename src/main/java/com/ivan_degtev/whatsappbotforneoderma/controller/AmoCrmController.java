@@ -2,15 +2,12 @@ package com.ivan_degtev.whatsappbotforneoderma.controller;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.LeadDto;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.AmoCrmService;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

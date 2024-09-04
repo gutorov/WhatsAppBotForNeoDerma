@@ -1,9 +1,6 @@
 package com.ivan_degtev.whatsappbotforneoderma.component;
 
 import com.ivan_degtev.whatsappbotforneoderma.dto.ServiceInformationDTO;
-import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.EmployeeDTO;
-import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.ServiceDTO;
-import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.ServiceMapper;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
@@ -14,12 +11,9 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.index.qual.SameLen;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -28,7 +22,6 @@ import java.util.stream.Collectors;
 public class EmbeddingComponent {
 
     private final YClientServiceImpl yClientService;
-    private final EmployeeMapper employeeMapper;
     private final ServiceMapper serviceMapper;
 
     private final EmbeddingModel embeddingModel;

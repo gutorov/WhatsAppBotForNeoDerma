@@ -9,6 +9,7 @@ import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.FreeSessionForBook
 import com.ivan_degtev.whatsappbotforneoderma.exception.NoParameterException;
 import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
 
+import com.ivan_degtev.whatsappbotforneoderma.exception.NotSaveDataException;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.AnswerCheckMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.NearestAvailableSessionMapper;
 import com.ivan_degtev.whatsappbotforneoderma.mapper.yClient.EmployeeMapper;
@@ -36,6 +37,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,7 +62,7 @@ public class Tools {
 
     private final JsonLoggingService jsonLogging;
 
-
+    private final static String messageAboutSuccessfulSaving = "Данные клиента успешно сохранены во внутреннюю базу данных!";
 
     public Tools(
             YClientServiceImpl yClientService,
@@ -86,64 +90,71 @@ public class Tools {
         this.jsonLogging = jsonLogging;
     }
 
-//    @Tool("""
-//            Получить свободные даты для записи и вывести в человекочитаемом формате. Если дат очень много
-//            вывести результат в формате "свободны от - и до - "
-//            """)
-//    public String getFreeDates(
-//            @P("Вопрос клиента") String question
-//    ) {
-//        String freeDates = yClientService.getListDatesAvailableForBooking(null).block();
-//        jsonLogging.info("Тул getFreeDates нашёл свободные даты {}", freeDates);
-//        return freeDates;
-//    }
-
     @Tool("""
-            Клиент назвал или упоминул своё имя в контексте. Тебе нужно выделить это имя из контекста разговора
-            и передать в метод имя клиента: {{userName}} и его currentChatId: {{currentChatId}}
+            Клиент назвал или упомянул своё имя в контексте. Тебе нужно выделить это имя из контекста разговора
+            и передать в метод - имя клиента: {{userName}} и его currentChatId: {{currentChatId}}
             """)
     @Transactional
-    public void saveUserName(
-//            @P("Общий контекст или вопрос клиента с упоминанием его имени")String context,
+    public String saveUserName(
             @P("Имя клиента")String userName,
-            @P("ID текущего чата")String currentChatId
+            @P("ID текущего чата") String currentChatId
     ) {
-        if (userName == null) {
-            throw new NoParameterException("В тул не передано имя клиента для сохранения");
+        if (userName == null || currentChatId == null) {
+            throw new NoParameterException("В тул не переданы имя клиента или id чата для сохранения");
         }
-        User currentUser = userRepository.findUserByChatId(currentChatId)
-                .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
-        currentUser.setSenderName(userName);
+        try {
+            User currentUser = userRepository.findUserByChatId(currentChatId)
+                    .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
+            currentUser.setSenderName(userName);
 
-        userRepository.save(currentUser);
+            userRepository.save(currentUser);
+            return messageAboutSuccessfulSaving;
+        } catch (NotSaveDataException ex) {
+            log.error("Ошибка при сохранении имени клиента для чата {}: {}", currentChatId, ex.getMessage());
+            return "Ошибка при сохранении имени. Пожалуйста, попробуйте еще раз позже.";
+        }
     }
 
+    @Tool("""
+            Клиент назвал или упомянул адрес своей електронной почты. Тебе нужно выделить этот email из контекста разговора и передать в метод -  
+            адрес электронной почты клиента: {{email}} и его currentChatId: {{currentChatId}}
+            """)
+    @Transactional
+    public String saveEmail(
+            @P("Электронный адрес клиента") String email,
+            @P("ID текущего чата") String currentChatId
+    ) {
+        if (email == null || currentChatId == null) {
+            throw new NoParameterException("В тул не переданы email клиента или id чата для сохранения");
+        }
+        try {
+            User currentUser = userRepository.findUserByChatId(currentChatId)
+                    .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
+            currentUser.setEmail(email);
+            userRepository.save(currentUser);
 
-//    @Tool("""
-//            Извлечение информации об услуге на основе данных, переданных из RAG.
-//            Если пользователь хочет узнать какие услуги мы оказываем  - выведи ему полученные из RAG данные,
-//            если пользователь интересуется узко-направленной услугой - покажи ему наиболее близкие услуги, которые ты получил из RAG
-//            """)
+            return messageAboutSuccessfulSaving;
+        } catch (NotSaveDataException ex) {
+            log.error("Ошибка при сохранении электронной почты клиента для чата {}: {}", currentChatId, ex.getMessage());
+            return "Ошибка при сохранении электронной почты. Пожалуйста, попробуйте еще раз позже.";
+        }
+    }
 
     @Tool("""
             Передай сюда запрос клиента {{question}} и chat Id {{currentChatId}}.
             Получить строку со всеми услугами, в этой строке есть базовая информация - названия услуг, цена и их внутренний id
             для дальнейшего поиска.
-            Исходя из запроса клиента - выведи общую информацию об услуге, которая ему нужна или предложи клиенту все варианты услуг в красивом виде с ценами.
+            Исходя из запроса клиента - выведи общую информацию об услуге - название и цену или предложи клиенту все варианты услуг с ценами.
+            ID услуги не выводи, но запомни, это потребуется в дальнейшем.
             """)
     public String getAllServices(
-//            @P("Список услуг, переданных из RAG") List<ServiceInformationDTO> ragData
             @P("Вопрос клиента с упоминанием нужной ему услуги") String question,
             @P("Текущий id чата") String currentChatId
     ) {
-//        List<ServiceInformationDTO> serviceInformationList = utilGetServicesInformationDTO();
-//        jsonLogging.info("Тул getAllServices вывел все услуги {}", serviceInformationList);
-//        return serviceInformationList;
         try {
             String response = ragAssistant.chat(currentChatId, question);
             return response;
         } catch (Exception e) {
-            // Логируйте ошибку и обработайте ее, чтобы ассистент мог верно ответить
             jsonLogging.error("Ошибка при вызове ragAssistant: {}", e.getMessage());
             return "{\"error\":\"Ошибка при вызове ragAssistant\", \"details\":\"" + e.getMessage() + "\"}";
         }
@@ -231,13 +242,16 @@ public class Tools {
             Передай сюда id выбранного сотрудника: {{staffId}} и id чата клиента: {{currentChatId}}.
             """)
     @Transactional
-    public void confirmationOfEmployeeSelection(
+    public String confirmationOfEmployeeSelection(
             @P("ID сотрудника, которого выбрал клиент") String staffId,
             @P("ID текущего чата")String currentChatId
     ) {
         log.info("Чат айди в confirmationOfEmployeeSelection {}", currentChatId);
 
-        if (staffId != null && !staffId.isEmpty()) {
+        if (staffId == null || staffId.isEmpty()) {
+            throw new NoParameterException("В тул не переданы id выбранного клиентом сотрудника для сохранения");
+        }
+        try {
             User currentUser = userRepository.findUserByChatId(currentChatId)
                     .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
             Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(
@@ -249,9 +263,11 @@ public class Tools {
             appointmentsRepository.save(actualAppointment);
             jsonLogging.info("Тул confirmationOfEmployeeSelection сохранил в БД обновленную запись с " +
                     "id сотрудника {}", actualAppointment.toString());
-        } else {
-            jsonLogging.error("Сотрудник с таким id не найден: {}", staffId);
-            throw new NotFoundException("Сотрудник с таким id не найден");
+
+            return messageAboutSuccessfulSaving;
+        }  catch (NotSaveDataException ex) {
+            log.error("Ошибка при сохранении выбранного сотрудника по его id {}: {}", staffId, ex.getMessage());
+            return "Ошибка при сохранении выбранного сотрудника. Пожалуйста, попробуйте еще раз позже.";
         }
     }
 
@@ -311,42 +327,46 @@ public class Tools {
                         .collect(Collectors.joining(", ")));
         return availableSessionDTOS;
     }
+
     @Tool("""
             Если клиент точно выбрал и подтвердил на какую дату и время ему необходима запись.
             Ранее он выбрал сотрудника и услугу и ты использовал внутренние инструменты для сохранения этих данных!
             Передай в метод эту дату и время: {{dateTime}} в формате iso8601 и chatId клиента: {{currentChatId}}
             """)
-    //Дата и время, указанные клиентом совпадают с информацией о доступных датах {{availableSessionDTOS}},
-    // которую ты получал ранее.
-    // Пойми из контекста твёрдость решения пользователя. данные о доступных датах: {{availableSessionDTOS}}
     @Transactional
-    public void confirmationOfDateSelection(
+    public String confirmationOfDateSelection(
             @P("Дата и время в полном формате, на которые записывается клиент") String dateTime,
-//            List<AvailableSessionDTO> availableSessionDTOS,
             @P("ID текущего чата") String currentChatId
     ) {
-        log.info("Чат айди в confirmationOfDateSelection {}", currentChatId);
-
-        if (dateTime != null) {
+        if (dateTime == null) {
+            throw new NoParameterException("Не была передана дата для сохранения!");
+        }
+        try {
             User currentUser = userRepository.findUserByChatId(currentChatId)
                     .orElseThrow(() -> new NotFoundException("User с id чата " + currentChatId + " не найден"));
-            // Поиск актуального объекта Appointment для текущей сессии
+
             Appointment actualAppointment = getOrCreateActualAppointmentForCurrentSession(
                     currentUser,
                     currentChatId
             );
 
-            actualAppointment.setDatetime(OffsetDateTime.parse(dateTime));
+            OffsetDateTime parsedDateTime = OffsetDateTime.parse(dateTime);
+            ZonedDateTime zonedDateTime = parsedDateTime.atZoneSameInstant(ZoneId.of("Asia/Krasnoyarsk"));
+            OffsetDateTime dateTimeWithOffset = zonedDateTime.toOffsetDateTime();
+
+            actualAppointment.setDatetime(dateTimeWithOffset);
             appointmentsRepository.save(actualAppointment);
             jsonLogging.info("Тул confirmationOfDateSelection сохранил в БД обновленную запись " +
-                            "с актуальной датой и временем записи {}", actualAppointment.toString());
-        } else {
-            jsonLogging.error("Указанная клиентом дата либо пустая, либо отсутствует в списке доступных " +
-                            "дат для бронирования: {}", dateTime);
-            throw new NotFoundException("Указанная клиентом дата либо пустая, " +
-                    "либо отсутствует в списке доступных дат для бронирования");
+                    "с актуальной датой и временем записи {}", actualAppointment.toString());
+
+            return messageAboutSuccessfulSaving;
+        } catch (NotSaveDataException ex) {
+            jsonLogging.error("Указанная клиентом дата-время либо пустая, либо отсутствует в списке доступных " +
+                    "дат для бронирования: {}", dateTime);
+            return "Ошибка при сохранении выбранной даты-времени. Пожалуйста, попробуйте еще раз позже.";
         }
     }
+
     @Tool("""
             Последний инструмент в цепочки взаимодействий с клиентом. Клиент выбрал и подтвердил услугу, сотрудника и дату
             со временем, на которые он записывается. Эти данные были обозначены и подтверждены.
@@ -376,6 +396,9 @@ public class Tools {
                 .findAllByAppointment(actualAppointment).get(0);
         if(currentUser.getSenderName() == null) {
             throw new NoParameterException("В сущности user не сохранено имя клиента");
+        }
+        if (currentUser.getEmail() == null) {
+            throw new NoParameterException("В сущности user не сохранена електронная почта клиента");
         }
         if (actualAppointment.getDatetime() == null) {
             throw new NoParameterException("В сущности appointment не сохранена дата и время записи на приём");

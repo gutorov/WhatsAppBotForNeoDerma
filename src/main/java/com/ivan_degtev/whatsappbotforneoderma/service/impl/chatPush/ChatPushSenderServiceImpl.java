@@ -68,17 +68,4 @@ public class ChatPushSenderServiceImpl extends ChatPushServiceAdapter {
             return Mono.error(new RuntimeException("Failed to deserialize outgoing request", e));
         }
     }
-
-//    @Override
-//    public Mono<String> createWebhook(String url, List<String> types) {
-//        return webClient.post()
-//                .uri(uriBuilder -> uriBuilder
-//                        .path("/webhooks")
-//                        .queryParam("url", url)
-//                        .queryParam("types[]", String.join("&types[]=", types))
-//                        .build())
-//                .header("Authorization", "Bearer " + chatPushApiKey)
-//                .retrieve()
-//                .bodyToMono(String.class);
-//    }
 }

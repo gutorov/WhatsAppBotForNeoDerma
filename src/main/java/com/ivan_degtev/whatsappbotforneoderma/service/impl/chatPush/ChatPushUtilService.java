@@ -32,10 +32,7 @@ public class ChatPushUtilService extends ChatPushServiceAdapter {
             JsonLoggingService jsonLogging
     ) {
         this.chatPushApiKey = chatPushApiKey;
-        // сюда вставил новые данные  - новый урл по чатпушу, неделю назад он был другой - остальные сервис
-        // по приёмы и отправке сообщений - пока со старым урлом
         this.webClient = webClientBuilder
-//                .baseUrl("https://api.pushsms.ru/developer/v1")
                 .baseUrl("https://api.chatpush.ru/api/v1")
                 .build();
         this.objectMapper = objectMapper;

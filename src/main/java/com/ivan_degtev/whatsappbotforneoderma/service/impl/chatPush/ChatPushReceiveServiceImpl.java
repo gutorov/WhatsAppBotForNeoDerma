@@ -51,22 +51,6 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
     }
 
 
-    /**
-     * основной метод взаимодействия(получения) сообщений из вотсапа по веб-хукам, при получении сообщения
-     * отдаёт Mono<String> для дальнейшей работы внутри приложения.
-     */
-//    @Override
-//    public Mono<String> createWebhook(String url, List<String> types) {
-//        return webClient.post()
-//                .uri(uriBuilder -> uriBuilder
-//                        .path("/webhooks")
-//                        .queryParam("url", url)
-//                        .queryParam("types[]", String.join("&types[]=", types))
-//                        .build())
-//                .header("Authorization", "Bearer " + chatPushApiKey)
-//                .retrieve()
-//                .bodyToMono(String.class);
-//    }
     @Override
     public void getMessageFromWebhook(
             Map<String, String> headers,
@@ -105,15 +89,4 @@ public class ChatPushReceiveServiceImpl extends ChatPushServiceAdapter {
             return Mono.error(new RuntimeException("Failed to deserialize incoming request", e));
         }
     }
-//
-//    /**
-//     * Тестовый метод, получает все активные веб-хуки
-//     */
-//    public Mono<Map<String, Object>> getAllWebhooks() {
-//        return webClient.get()
-//                .uri("https://api.chatpush.ru/api/v1/webhooks/")
-//                .header("Authorization", "Bearer " + chatPushApiKey)
-//                .retrieve()
-//                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
-//    }
 }

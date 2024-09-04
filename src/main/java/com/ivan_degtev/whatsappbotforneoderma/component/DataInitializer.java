@@ -1,7 +1,7 @@
 package com.ivan_degtev.whatsappbotforneoderma.component;
 
 import com.ivan_degtev.whatsappbotforneoderma.service.ai.LangChain4jService;
-import com.ivan_degtev.whatsappbotforneoderma.tests.TestService;
+import com.ivan_degtev.whatsappbotforneoderma.service.util.PreparingDataForSendingService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataInitializer implements ApplicationListener<ApplicationReadyEvent> {
     private final LangChain4jService langChain4jService;
-    private final TestService testService;
+    private final PreparingDataForSendingService preparingDataForSendingService;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
@@ -21,9 +21,7 @@ public class DataInitializer implements ApplicationListener<ApplicationReadyEven
 
         //Раскомментировать для теста ЛЛМ локально через сканнер
         langChain4jService.testLLMLogicWithScanner();
-
 //        langChain4jService.testAmo();
-//        testService.testsTests();
 //        langChain4jService.testSendMessage();
     }
 }

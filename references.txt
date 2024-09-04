@@ -128,3 +128,21 @@ public class OpenAITuningService {
     "success": true,
 
     },
+
+
+    {
+      "phone": "79000000000",
+      "fullname": "ДИМА",
+      "email": "dio@yclients.com",
+      "appointments": [
+        {
+          "id": 1,
+          "services": [
+            8612890
+          ],
+          "staff_id": 1519138,
+          "datetime": "2024-09-04 03:00:00.000000 +00:00",
+        },
+        }
+      ]
+    }

@@ -5,9 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
 
 @Setter
 @Getter
@@ -19,5 +16,4 @@ public class AvailableSessionDTO {
     private Integer seanceLength;
     @JsonProperty("date_time")
     private String dateTime;
-//    private OffsetDateTime dateTime;
 }

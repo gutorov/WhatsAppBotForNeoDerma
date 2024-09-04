@@ -6,29 +6,26 @@ import com.ivan_degtev.whatsappbotforneoderma.config.LC4jAssistants.RAGAssistant
 import com.ivan_degtev.whatsappbotforneoderma.controller.AmoCrmController;
 import com.ivan_degtev.whatsappbotforneoderma.controller.llm.LLMMemoryController;
 import com.ivan_degtev.whatsappbotforneoderma.controller.whatsapp.WhatsAppSendController;
-import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.CustomFieldDto;
-import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.LeadDto;
-import com.ivan_degtev.whatsappbotforneoderma.dto.amoCrm.ValueDto;
 import com.ivan_degtev.whatsappbotforneoderma.exception.NotFoundException;
 import com.ivan_degtev.whatsappbotforneoderma.model.Message;
 import com.ivan_degtev.whatsappbotforneoderma.model.User;
 import com.ivan_degtev.whatsappbotforneoderma.model.yClient.Appointment;
-import com.ivan_degtev.whatsappbotforneoderma.model.yClient.ServiceInformation;
 import com.ivan_degtev.whatsappbotforneoderma.repository.UserRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.AppointmentsRepository;
 import com.ivan_degtev.whatsappbotforneoderma.repository.yClient.ServiceInformationRepository;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientSendServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
+import com.ivan_degtev.whatsappbotforneoderma.service.util.PreparingDataForSendingService;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Optional;
+import java.util.Scanner;
+import java.util.UUID;
+
 
 @Service
 @Slf4j
@@ -48,6 +45,7 @@ public class LangChain4jService {
     private final WhatsAppSendController whatsAppSendController;
     private final LLMMemoryController llmMemoryController;
     private final YClientSendServiceImpl yClientSendService;
+    private final PreparingDataForSendingService preparingDataForSendingService;
 
     private final JsonLoggingService jsonLogging;
 
@@ -61,8 +59,12 @@ public class LangChain4jService {
             WhatsAppSendController whatsAppSendController,
             LLMMemoryController llmMemoryController,
             YClientSendServiceImpl yClientSendService,
-            JsonLoggingService jsonLogging,
-            ServiceInformationRepository serviceInformationRepository, DailyScheduler dailyScheduler, AmoCrmController amoCrmController) {
+            ServiceInformationRepository serviceInformationRepository,
+            DailyScheduler dailyScheduler,
+            AmoCrmController amoCrmController,
+            PreparingDataForSendingService preparingDataForSendingService,
+            JsonLoggingService jsonLogging
+    ) {
         this.openAiToken = openAiToken;
         this.assistantTest = assistantTest;
         this.questionAnalyzer = questionAnalyzer;
@@ -72,10 +74,11 @@ public class LangChain4jService {
         this.whatsAppSendController = whatsAppSendController;
         this.llmMemoryController = llmMemoryController;
         this.yClientSendService = yClientSendService;
-        this.jsonLogging = jsonLogging;
         this.serviceInformationRepository = serviceInformationRepository;
         this.dailyScheduler = dailyScheduler;
         this.amoCrmController = amoCrmController;
+        this.preparingDataForSendingService = preparingDataForSendingService;
+        this.jsonLogging = jsonLogging;
     }
 
 
@@ -129,110 +132,40 @@ public class LangChain4jService {
         }
 
         //ВАЖНО! ВРЕМЕННАЯ ЛОГИКА ДЛЯ ТЕСТИРОВАНИЯ ЛЛМ БЕЗ РЕАЛЬНОЙ ЗАПИСИ В YCLIENT -
-//        ЗАКОММЕНТИРОВАТЬ ПРИ РАБОТЕ
+        //ЗАКОММЕНТИРОВАТЬ ПРИ РАБОТЕ
+//        else {
+//            String LLMAnswer = assistantTest.chat(currentChatId, textMessage, currentChatId);
+//            jsonLogging.info("Ответ от ЛЛМ по сути вопроса: {}", LLMAnswer);
+//            var answerFromSendMessage = whatsAppSendController
+//                    .sendMessage(LLMAnswer, currentUserPhone)
+//                    .subscribe();
+//            jsonLogging.info("Отправил сообщение из сервиса LangChain4j в чатпуш сервис - в сообщению юзеру, " +
+//                    "ответ от метода отправки {}", answerFromSendMessage);
+//        }
+
+
+        //ВАЖНО! ФИНАЛЬНЫЙ МЕТОД ПО ОТПРАВКЕ ЗАПРОС НА СОЗДАНИЕ БРОНИ В YCLIENT. РАСКОМЕНТИРОВАТЬ ПРИ ТЕСТЕ И ОТПРАВКЕ КОДА В ПРОД
         else {
             String LLMAnswer = assistantTest.chat(currentChatId, textMessage, currentChatId);
             jsonLogging.info("Ответ от ЛЛМ по сути вопроса: {}", LLMAnswer);
+
             var answerFromSendMessage = whatsAppSendController
                     .sendMessage(LLMAnswer, currentUserPhone)
                     .subscribe();
             jsonLogging.info("Отправил сообщение из сервиса LangChain4j в чатпуш сервис - в сообщению юзеру, " +
                     "ответ от метода отправки {}", answerFromSendMessage);
+
+            Optional<Appointment> currentAppointment = appointmentsRepository.findByUser_UniqueIdForAppointment(
+                    currentUser.getUniqueIdForAppointment()
+            );
+            if (currentAppointment.isPresent()) {
+                if (isAppointmentReadyForShipment(currentAppointment.get())) {
+                    User finalUser = userRepository.findUserByChatId(currentChatId)
+                                    .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
+                    preparingDataForSendingService.sendingAndCheckToYclientService(finalUser, currentAppointment.get());
+                }
+            }
         }
-
-
-        //ВАЖНО! ФИНАЛЬНЫЙ МЕТОД ПО ОТПРАВКЕ ЗАПРОС НА СОЗДАНИЕ БРОНИ В YCLIENT. РАСКОМЕНТИРОВАТЬ ПРИ ТЕСТЕ И ОТПРАВКЕ КОДА В ПРОД
-//        else {
-//            String LLMAnswer = assistantTest.chat(currentChatId, textMessage, currentChatId);
-//            jsonLogging.info("Ответ от ЛЛМ по сути вопроса: {}", LLMAnswer);
-//
-//            Optional<Appointment> currentAppointment = appointmentsRepository.findByUser_UniqueIdForAppointment(
-//                    currentUser.getUniqueIdForAppointment()
-//            );
-//            if (currentAppointment.isPresent()) {
-//                if (isAppointmentReadyForShipment(currentAppointment.get())) {
-//                    List<Appointment> currentAppointments = List.of(currentAppointment.get());
-//                    List<ServiceInformation> currentServiceInformation =
-//                            currentAppointment.get().getServicesInformation();
-//
-//                    //Отправка пост запроса на Yclient с записью
-//                    yClientSendService.sendBookingRequest(
-//                                    currentUser,
-//                                    currentAppointments,
-//                                    currentServiceInformation
-//                            )
-//                            .subscribe(responseEntity -> {
-//                                Map<String, Object> responseBody = responseEntity.getBody();
-//                                if (responseBody != null) {
-//                                    boolean success = (Boolean) responseBody.get("success");
-//                                    if (success) {
-//                                        log.info("Запись прошла успешно.");
-//                                        addingFinalFlagAboutSuccessfulRecording(currentAppointments);
-//                                    } else {
-//                                        log.warn("Запись не удалась.");
-//                                    }
-//                                }
-//                            });
-//                }
-//            }
-
-    }
-
-    public void createRecordInAmoCrm(String currentChatId, Appointment currentAppointment) {
-        User currentUser = userRepository.findUserByChatId(currentChatId)
-                .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден"));
-        List<ServiceInformation> currentServiceInformation = serviceInformationRepository.findAllByAppointment(currentAppointment);
-
-        LeadDto leadDto = new LeadDto();
-        leadDto.setName(currentServiceInformation.get(0).getTitle());
-        leadDto.setPipelineId(6373406);
-        leadDto.setCreatedBy(0);
-        leadDto.setPrice(Integer.valueOf(currentServiceInformation.get(0).getPriceMax()));
-        leadDto.setStatusId(69559066);
-
-        List<CustomFieldDto> customFields = new ArrayList<>();
-
-        CustomFieldDto nameField = new CustomFieldDto();
-        nameField.setFieldId(1881929);
-        nameField.setValues(List.of(new ValueDto(currentUser.getSenderName())));
-
-        CustomFieldDto phoneField = new CustomFieldDto();
-        phoneField.setFieldId(1881929);
-        phoneField.setValues(List.of(new ValueDto(currentUser.getSenderPhoneNumber())));
-
-        CustomFieldDto dateField = new CustomFieldDto();
-        dateField.setFieldId(1883033);
-        dateField.setValues(List.of(new ValueDto(currentAppointment.getDatetime().toString())));
-
-        customFields.add(nameField);
-        customFields.add(phoneField);
-        customFields.add(dateField);
-
-        leadDto.setCustomFieldsValues(customFields);
-
-        amoCrmController.addLead(leadDto);
-    }
-
-    /**
-     * Добавляет в appointments флаг по отправке запрос на добавление записи в яклиент.
-     * Финальное изменение
-     * @param currentAppointments
-     */
-    @Transactional
-    public void addingFinalFlagAboutSuccessfulRecording(List<Appointment> currentAppointments) {
-        if (currentAppointments == null || currentAppointments.isEmpty()) {
-            log.warn("Список встреч пуст или не задан.");
-            return;
-        }
-
-        currentAppointments.stream()
-                .filter(Objects::nonNull)
-                .peek(appointment -> {
-                    appointment.setApplicationSent(true);
-                    appointmentsRepository.save(appointment);
-                })
-                .forEach(appointment -> log.info("Обновлена встреча с id: {}", appointment.getId()));
-        log.info("Все встречи были обновлены с applicationSent=true.");
     }
 
     /**
@@ -244,7 +177,7 @@ public class LangChain4jService {
     public boolean isAppointmentReadyForShipment(Appointment appointment) {
         return appointment != null
                 && Boolean.TRUE.equals(appointment.getCompletedBooking())
-                && Boolean.FALSE.equals(appointment.getApplicationSent());
+                && appointment.getApplicationSent() == null;
     }
 
     /**
@@ -263,10 +196,14 @@ public class LangChain4jService {
      */
     public void testLLMLogicWithScanner() {
         User currentUser = new User();
-        currentUser.setChatId("111");
-        currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
-        userRepository.save(currentUser);
-
+        if (userRepository.existsByChatId("111")) {
+            currentUser = userRepository.findUserByChatId("111").get();
+        } else {
+            currentUser.setChatId("111");
+            currentUser.setSenderPhoneNumber("89005553535");
+            currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
+            userRepository.save(currentUser);
+        }
 
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -287,39 +224,11 @@ public class LangChain4jService {
             if ( currentAppointment != null
                     && checkUser.getAppointments().get(0).getCompletedBooking() != null
                     && checkUser.getAppointments().get(0).getCompletedBooking()) {
-                createRecordInAmoCrm(currentChatId, currentAppointment);
+
+                preparingDataForSendingService.sendingAndCheckToYclientService(currentUser, currentAppointment);
             }
         }
         log.info("Сканнер закрыт!");
-    }
-
-//    @Transactional
-    public void testAmo() {
-        User currentUser = new User();
-        currentUser.setChatId("111");
-        currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
-        userRepository.save(currentUser);
-
-        ServiceInformation serviceInformation = new ServiceInformation();
-        serviceInformation.setServiceId("123456");
-        serviceInformation = serviceInformationRepository.save(serviceInformation);
-
-        Appointment currentAppointment = new Appointment();
-        currentAppointment.setStaffId("123456");
-        OffsetDateTime appointmentDateTime = OffsetDateTime.of(2024, 9, 11, 7, 0, 0, 0, ZoneOffset.UTC);
-        currentAppointment.setDatetime(appointmentDateTime);
-
-        List<ServiceInformation> serviceInformationList = new ArrayList<>();
-        serviceInformationList.add(serviceInformation);
-        currentAppointment.setServicesInformation(serviceInformationList);
-
-        List<Appointment> appointmentList = new ArrayList<>();
-        appointmentList.add(currentAppointment);
-        currentUser.setAppointments(appointmentList);
-
-        userRepository.save(currentUser);
-
-        createRecordInAmoCrm("111", currentAppointment);
     }
 
 }

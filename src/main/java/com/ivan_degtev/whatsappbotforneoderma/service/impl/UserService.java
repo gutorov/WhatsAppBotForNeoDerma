@@ -62,43 +62,9 @@ public class UserService {
         User currentUser = userRepository.findUserByChatId(currentChatId)
                         .orElseThrow(() -> new NotFoundException("Юзер с айди чата " + currentChatId + " не найден!"));
 
-//        String currentUniqueIdForAppointment = webhookPayload.getPayload().getNewMessage().getMessage().getId();
         currentUser = userChecks.addingUniqueIdForAppointmentIsNone(currentUser);
 
         langChain4jService.mainMethodByWorkWithLLM(currentUser, currentMessage);
     }
 
-//    /**
-//     * Метод добавляет уникальный номер для юзера, для дальнейшей связи между юзером и объектами записи на сеанс
-//     * ПРоисходит это лишь при первом сообщении(добавление нового юззера в базу)
-//     * или
-//     * если все связанные сущности сеанса у юзера финализированы(завершены) и это значит, что юзер хочет создать новую
-//     * запись на сеас
-//     * @param currentUser
-//     */
-//    @Transactional
-//    public void addingUniqueIdForAppointmentIsNone(User currentUser) {
-//        if (currentUser.getUniqueIdForAppointment() == null) {
-//            currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
-//            userRepository.save(currentUser);
-//        } else if (currentUser.getAppointments()
-//                .stream()
-//                .allMatch(appointment ->
-//                        Boolean.TRUE.equals(appointment.getCompletedBooking()) &&
-//                        Boolean.TRUE.equals(appointment.getApplicationSent())))
-//        {
-//            currentUser.setUniqueIdForAppointment(UUID.randomUUID().toString());
-//            userRepository.save(currentUser);
-//        }
-//        jsonLogging.info("Возвращаю из метода addingUniqueIdForAppointmentIsNone текущего юзера с изменениями {}",
-//                currentUser.toString());
-//    }
-//
-//    /**
-//     * Утилитный метод проверяет есть ли юзер по чат-айди в БД, для понимания были ли с ним ранее диалоги. При отсутсвии -
-//     * юзер добавляется в БД, при наличии - добавляются только новые сообщения, связываюсь с текущим юзером по чат-айди
-//     */
-//    private boolean CheckingExistenceUserByChatId(String currentChatId) {
-//        return userRepository.existsByChatId(currentChatId);
-//    }
 }

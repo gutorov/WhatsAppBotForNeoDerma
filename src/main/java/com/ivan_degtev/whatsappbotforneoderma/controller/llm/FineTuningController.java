@@ -16,12 +16,12 @@ import java.util.Map;
 public class FineTuningController {
 
     private final FineTuningService fineTuningService;
-    private static final String filePath = "src/main/resources/assistant-training.jsonl";
+    private static final String FILE_PATH_FOR_TRAINING = "src/main/resources/assistant-training.jsonl";
 
 
     @PostMapping(path = "/upload_training_file")
     public ResponseEntity<String> uploadTrainingFile() {
-        String  fileIdForTuningCustomModel = fineTuningService.uploadTrainingFile(filePath);
+        String  fileIdForTuningCustomModel = fineTuningService.uploadTrainingFile(FILE_PATH_FOR_TRAINING);
         return ResponseEntity.ok("Создание файла на опен аи для дальнейшей настройки с id " + fileIdForTuningCustomModel);
     }
 

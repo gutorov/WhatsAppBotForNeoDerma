@@ -1,15 +1,17 @@
 package com.ivan_degtev.whatsappbotforneoderma.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.ivan_degtev.whatsappbotforneoderma.dto.yClientData.tests.BookingRequestDto;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.MessageService;
+import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientSendServiceImpl;
 import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -18,17 +20,20 @@ import java.util.List;
 
 @RestController
 @Slf4j
+@RequestMapping("/yclients")
 public class YClientController {
     private final MessageService messageService;
 
     @Value("https://api.yclients.com/api/v1/")
     private final String YClientUrl;
+    private final Long companyId = 316398L;
 
     @Value("${yclient.token}")
     private final String yClientToken;
+
     private final WebClient webClient;
     private final YClientServiceImpl yclientService;
-    private final Long companyId = 316398L;
+    private final YClientSendServiceImpl yClientSendService;
 
     public YClientController(
             MessageService messageService,
@@ -37,7 +42,8 @@ public class YClientController {
             @Value("${yclient.token}")
             String yClientToken,
             WebClient.Builder webClientBuilder,
-            YClientServiceImpl yClientService
+            YClientServiceImpl yClientService,
+            YClientSendServiceImpl yClientSendService
     ) {
         this.messageService = messageService;
         this.YClientUrl = YClientUrl;
@@ -46,6 +52,7 @@ public class YClientController {
                 .defaultHeader(HttpHeaders.ACCEPT, "application/vnd.api.v2+json")
                 .build();
         this.yclientService = yClientService;
+        this.yClientSendService = yClientSendService;
     }
 
     /**
@@ -102,4 +109,28 @@ public class YClientController {
         return yclientService.getListSessionsAvailableForBooking(date, staffId, serviceIds);
     }
 
+    /**
+     * Тестовая ручка, для отправки записей через постман при обращении к localhost, нужна для отладки
+     * @param bookingRequestDto
+     * @return
+     */
+    @PostMapping("/book")
+    public ResponseEntity<String> sendBookingRequest(@RequestBody BookingRequestDto bookingRequestDto) {
+        try {
+            yClientSendService.sendBookingRequest(bookingRequestDto)
+                    .doOnSuccess(response -> {
+                        if (response.getStatusCode().is2xxSuccessful()) {
+                            log.info("Успешно отправлен запрос: {}", response.getBody());
+                        } else {
+                            log.warn("Ошибка при отправке запроса: {}", response.getBody());
+                        }
+                    })
+                    .block();
+            return ResponseEntity.ok("Запрос успешно отправлен");
+        } catch (Exception e) {
+            log.error("Ошибка при отправке запроса: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при отправке запроса: " + e.getMessage());
+        }
+    }
 }
