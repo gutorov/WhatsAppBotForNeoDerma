@@ -1,0 +1,36 @@
+version: "3.9"
+
+volumes:
+  whatsapp_bot_for_neoderma:
+
+services:
+  whatsapp_bot_for_neoderma_db:
+    image: postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=ivan
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=neoderma
+    volumes:
+      - whatsapp_bot_for_neoderma:/var/lib/postgresql/data
+    ports:
+      - "5444:5432"
+
+  app:
+    restart: always
+    build: .
+    ports:
+      - "8090:8090"
+    depends_on:
+      - whatsapp_bot_for_neoderma_db
+    environment:
+      SPRING_DATASOURCE_URL: 'jdbc:postgresql://whatsapp_bot_for_neoderma_db:5432/neoderma'
+      SPRING_DATASOURCE_USERNAME: ivan
+      SPRING_DATASOURCE_PASSWORD: password
+      JAVA_OPTS: '-Xmx512m'
+
+      CHATPUSH_API_KEY: ${CHATPUSH_API_KEY}
+      NGROK_URL: ${NGROK_URL}
+      OPEN_AI_TOKEN: ${OPEN_AI_TOKEN}
+      YCLIENT_TOKEN: ${YCLIENT_TOKEN}
+      AMOCRM_TOKEN: ${AMOCRM_TOKEN}

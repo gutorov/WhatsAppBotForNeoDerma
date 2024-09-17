@@ -13,6 +13,9 @@ logs/
 .settings
 .springBeans
 .sts4-cache
+.env
+createDockerSecrets.sh
+deploy.sh
 
 ### IntelliJ IDEA ###
 .idea

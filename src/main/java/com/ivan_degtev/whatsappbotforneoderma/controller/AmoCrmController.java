@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * тут неск утилитных ручек по получению данных от амосрм по лидам и по колонкам(нужны для составления верного тела запроса на добавления записи)
+ * И ручка addLead на добавление записи в нужную сделку и с нужным статусом
+ */
 @RestController
 @RequiredArgsConstructor
 public class AmoCrmController {
