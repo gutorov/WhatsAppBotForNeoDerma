@@ -2,6 +2,7 @@ version: "3.9"
 
 volumes:
   whatsapp_bot_for_neoderma:
+  app_files_neoderma:
 
 services:
   whatsapp_bot_for_neoderma_db:
@@ -34,3 +35,6 @@ services:
       OPEN_AI_TOKEN: ${OPEN_AI_TOKEN}
       YCLIENT_TOKEN: ${YCLIENT_TOKEN}
       AMOCRM_TOKEN: ${AMOCRM_TOKEN}
+      NOTION_TOKEN: ${NOTION_TOKEN}
+    volumes:
+      - app_files_neoderma:/app/files
