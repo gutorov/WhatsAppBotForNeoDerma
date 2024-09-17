@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Configuration
 public class NotionConfig {
 
-    @Value("${notion.api.token}")
+    @Value("${notion.token}")
     private String notionToken;
 
     @Bean
