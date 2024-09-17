@@ -16,6 +16,7 @@ import com.ivan_degtev.whatsappbotforneoderma.service.util.JsonLoggingService;
 import com.ivan_degtev.whatsappbotforneoderma.tests.AssistantTest;
 import com.ivan_degtev.whatsappbotforneoderma.tests.Tools;
 
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -33,12 +34,15 @@ import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+
+import java.io.IOException;
 
 import static java.util.Arrays.asList;
 
@@ -137,6 +141,18 @@ public class AIConfig {
     }
 
     @Bean
+    @Lazy
+    public  EmbeddingStoreIngestor createEmbeddingStoreIngestor() throws IOException {
+        EmbeddingStoreIngestor embeddingStoreIngestor = EmbeddingStoreIngestor.builder()
+                .documentSplitter(DocumentSplitters.recursive(300, 20))
+                .embeddingModel(embeddingModel())
+                .embeddingStore(embeddingStore())
+                .build();
+
+        return embeddingStoreIngestor;
+    }
+
+    @Bean
     public RAGAssistant ragAssistant() {
         var contentRetriever = EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore())
@@ -172,9 +188,24 @@ public class AIConfig {
     @Lazy
     @Bean
     public AssistantTest assistantTest() {
+        var contentRetriever = EmbeddingStoreContentRetriever.builder()
+                .embeddingStore(embeddingStore())
+                .embeddingModel(embeddingModel())
+                .maxResults(15)
+                .build();
+
+        var contentInjector = DefaultContentInjector.builder()
+                .metadataKeysToInclude(asList("file_name", "index"))
+                .build();
+
+        RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
+                .contentRetriever(contentRetriever)
+                .contentInjector(contentInjector)
+                .build();
 
         return AiServices.builder(AssistantTest.class)
                 .chatLanguageModel(chatLanguageModel())
+                .retrievalAugmentor(retrievalAugmentor)
                 .chatMemoryProvider(chatMemoryProvider())
                 .tools(new Tools(
                         yClientService,
