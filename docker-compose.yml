@@ -30,11 +30,5 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       JAVA_OPTS: '-Xmx512m'
 
-      CHATPUSH_API_KEY: ${CHATPUSH_API_KEY}
-      NGROK_URL: ${NGROK_URL}
-      OPEN_AI_TOKEN: ${OPEN_AI_TOKEN}
-      YCLIENT_TOKEN: ${YCLIENT_TOKEN}
-      AMOCRM_TOKEN: ${AMOCRM_TOKEN}
-      NOTION_TOKEN: ${NOTION_TOKEN}
     volumes:
       - app_files_neoderma:/app/files
