@@ -1,5 +1,6 @@
 package com.ivan_degtev.whatsappbotforneoderma.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ivan_degtev.whatsappbotforneoderma.model.enums.Direction;
 import lombok.Getter;
@@ -16,10 +17,11 @@ public class WebhookPayload {
     @Setter
     @Getter
     @ToString
+    @JsonIgnoreProperties({"delivery_id"})
     public static class Payload {
         @JsonProperty("new_message")
         private NewMessage newMessage;
-        @JsonProperty("delivery_id")
+        @JsonProperty("customer_id") //previously there was a delivery_id but i got a problem with the fact the payload content has changed
         private Long deliveryId;
     }
 
