@@ -29,6 +29,5 @@ services:
       SPRING_DATASOURCE_USERNAME: ivan
       SPRING_DATASOURCE_PASSWORD: password
       JAVA_OPTS: '-Xmx512m'
-
     volumes:
-      - app_files_neoderma:/app/files
+      - ./app_files_neoderma:/opt/app/files

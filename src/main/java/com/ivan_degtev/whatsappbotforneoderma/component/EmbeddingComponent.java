@@ -6,6 +6,7 @@ import com.ivan_degtev.whatsappbotforneoderma.service.impl.yClient.YClientServic
 import com.ivan_degtev.whatsappbotforneoderma.service.util.embedding.ApacheTikaDocumentParser;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
@@ -37,10 +38,10 @@ public class EmbeddingComponent {
     private final EmbeddingStore embeddingStore;
     private final EmbeddingStoreIngestor embeddingStoreIngestor;
 
-//    private static final String FILES_DIRECTORY = "src/main/resources/files";
+    private static final String FILES_DIRECTORY = "src/main/resources/files";
 
     //in docker volume
-    private static final String FILES_DIRECTORY = "/app/files";
+//    private static final String FILES_DIRECTORY = "/app/files";
 
     public void loadCompanyServiceJsonFromYclient() {
         String services = yClientService.getListServicesAvailableForBooking(null, null, null).block();

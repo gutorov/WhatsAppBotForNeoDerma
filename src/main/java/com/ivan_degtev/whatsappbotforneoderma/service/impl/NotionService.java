@@ -29,11 +29,11 @@ public class NotionService {
     private final NotionMapper notionMapper;
 
     private final static String DATA_BASE_ID = "d88493ddf2d149329babf255d790e578";
-    //    private final static String PATH_FOR_SAVE_FILES = "src/main/resources/files";
-//    private final static String PATH_FILE_WITH_IDS_WORK_PAGES = "src/main/resources/page_ids.txt";
-
-    private final static String PATH_FOR_SAVE_FILES = "/app/files";
+        private final static String PATH_FOR_SAVE_FILES = "src/main/resources/files";
     private final static String PATH_FILE_WITH_IDS_WORK_PAGES = "page_ids.txt";
+
+//    private final static String PATH_FOR_SAVE_FILES = "/app/files";
+//    private final static String PATH_FILE_WITH_IDS_WORK_PAGES = "page_ids.txt";
 
 
     /**
